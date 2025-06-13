@@ -15,5 +15,5 @@ text_bos_token = 1
 log_folder = "/logs"
 moshi_weight = "/models/tts_2961f6b6@82/checkpoint.safetensors"
 config_path = "/models/tts_2961f6b6@82/config.json"
-voice_folder = "/models/"
+voice_folder = "hf-snapshot://kyutai/unmute-voices"
 default_voice = "barack_demo.wav"
