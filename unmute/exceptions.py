@@ -1,15 +1,7 @@
 import unmute.openai_realtime_api_events as ora
 
 
-class NoTracebackError(Exception):
-    """Error for which no traceback should be shown."""
-
-
-class MissingServiceError(Exception):
-    """Some service is missing, we might expect this to happen or not."""
-
-
-class MissingServiceAtCapacity(NoTracebackError, MissingServiceError):
+class MissingServiceAtCapacity(Exception):
     """A service is operating at capacity, but no serious error."""
 
     def __init__(self, service: str):
@@ -17,7 +9,7 @@ class MissingServiceAtCapacity(NoTracebackError, MissingServiceError):
         super().__init__(f"{service} is not available.")
 
 
-class MissingServiceTimeout(NoTracebackError, MissingServiceError):
+class MissingServiceTimeout(Exception):
     """A service timed out."""
 
     def __init__(self, service: str):
@@ -25,7 +17,7 @@ class MissingServiceTimeout(NoTracebackError, MissingServiceError):
         super().__init__(f"{service} timed out.")
 
 
-class WebSocketClosedError(NoTracebackError):
+class WebSocketClosedError(Exception):
     """Remote web socket is closed, let's move on."""
 
 

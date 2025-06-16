@@ -44,7 +44,11 @@ jobs:
         run: cd frontend && pnpm install
 
       - name: Run pre-commit
-        run: uv run pre-commit run --all-files
+        run: |
+          uv run pre-commit run --all-files
+          # Some redundancy here because some hooks will run in any stage,
+          # but I don't think there is a cleaner way to make sure they all run
+          uv run pre-commit run --all-files --hook-stage pre-push
 
   backend-unit-tests:
     runs-on: ubuntu-latest

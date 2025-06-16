@@ -39,3 +39,10 @@ repos:
         files: ^frontend/src/.*$
         pass_filenames: false
         stages: [pre-push]
+      - id: pyright
+        name: Pyright type-checking
+        language: system
+        entry: bash -c 'uv run pyright'
+        files: ^unmute/.*$
+        pass_filenames: false
+        stages: [pre-push]

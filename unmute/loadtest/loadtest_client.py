@@ -7,7 +7,7 @@ import multiprocessing
 import random
 import time
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated
 
 import librosa
 import numpy as np
@@ -17,12 +17,21 @@ import requests
 import sphn
 import websockets
 from fastrtc import CloseStream, audio_to_float32, audio_to_int16
-from pydantic import BaseModel, Field, TypeAdapter, model_validator
+from pydantic import Field, TypeAdapter
 from pydantic.json import pydantic_encoder
 
 import unmute.openai_realtime_api_events as ora
 from unmute.kyutai_constants import SAMPLE_RATE
 from unmute.llm.system_prompt import SmalltalkInstructions
+from unmute.loadtest.loadtest_result import (
+    AssistantMessageTiming,
+    BenchmarkAssistantMessage,
+    BenchmarkMessage,
+    BenchmarkUserMessage,
+    UserMessageTiming,
+    combine_latency_reports,
+    make_latency_report,
+)
 from unmute.timer import PhasesStopwatch
 from unmute.tts.realtime_queue import RealtimeQueue
 from unmute.tts.voices import VoiceSample
@@ -40,50 +49,6 @@ logging.basicConfig(
     format="%(asctime)s %(process)d %(name)s %(levelname)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-
-
-class UserMessageTiming(BaseModel):
-    audio_start: float
-    text_start: float
-    audio_end: float
-
-    @model_validator(mode="after")
-    def validate_timing(self):
-        # Note that text_start and audio_end can be in either order
-        if not (self.audio_start < self.text_start) or not (
-            self.audio_start < self.audio_end
-        ):
-            raise ValueError(f"Invalid timing: {self}")
-        return self
-
-
-class AssistantMessageTiming(BaseModel):
-    response_created: float
-    text_start: float
-    audio_start: float
-    audio_end: float
-    received_audio_length: float
-
-    @model_validator(mode="after")
-    def validate_timing(self):
-        if not (self.response_created < self.audio_start < self.audio_end):
-            raise ValueError(f"Invalid timing: {self}")
-        return self
-
-
-class BenchmarkUserMessage(BaseModel):
-    role: Literal["user"] = "user"
-    content: str
-    timing: UserMessageTiming
-
-
-class BenchmarkAssistantMessage(BaseModel):
-    role: Literal["assistant"] = "assistant"
-    content: str
-    timing: AssistantMessageTiming
-
-
-BenchmarkMessage = BenchmarkUserMessage | BenchmarkAssistantMessage
 
 
 def base64_encode_audio(audio: np.ndarray):
@@ -179,7 +144,9 @@ async def receive_loop(
     audio_to_emit: asyncio.Queue[np.ndarray | CloseStream],
     audio_files_data: list[np.ndarray],
     listen: bool,
-):
+) -> list[BenchmarkMessage] | BaseException:
+    # ^ We use BaseException in the return type above because later we want to also
+    # be able to use KeyboardInterrupt as an error
     opus_reader = sphn.OpusStreamReader(SAMPLE_RATE)
     current_audio_chunks = []
 
@@ -189,7 +156,6 @@ async def receive_loop(
     user_stopwatch = PhasesStopwatch(["audio_start", "text_start", "audio_end"])
 
     chat_history = []
-    error = None
     benchmark_chat_history: list[BenchmarkMessage] = []
 
     try:
@@ -294,82 +260,14 @@ async def receive_loop(
     except websockets.ConnectionClosed as e:
         receive_logger.info(f"Connection closed while receiving messages: {e}")
         if e.code != websockets.CloseCode.NORMAL_CLOSURE:
-            error = repr(e)  # make it serializable
+            return e
 
-    return {
-        "benchmark_chat_history": benchmark_chat_history,
-        "latency_report": get_latency_report(benchmark_chat_history),
-        "error": error,
-    }
-
-
-class LatencyReport(BaseModel):
-    stt_latencies: list[float]
-    vad_latencies: list[float]
-    llm_latencies: list[float]
-    tts_start_latencies: list[float]
-    tts_realtime_factors: list[float]
-
-    def compress(self):
-        return LatencyReport(
-            stt_latencies=[float(np.mean(self.stt_latencies))],
-            vad_latencies=[float(np.mean(self.vad_latencies))],
-            llm_latencies=[float(np.mean(self.llm_latencies))],
-            tts_start_latencies=[float(np.mean(self.tts_start_latencies))],
-            tts_realtime_factors=[float(np.mean(self.tts_realtime_factors))],
-        )
-
-
-def combine_latency_reports(reports: list[LatencyReport]) -> LatencyReport:
-    return LatencyReport(
-        stt_latencies=[lat for r in reports for lat in r.stt_latencies],
-        vad_latencies=[lat for r in reports for lat in r.vad_latencies],
-        llm_latencies=[lat for r in reports for lat in r.llm_latencies],
-        tts_start_latencies=[lat for r in reports for lat in r.tts_start_latencies],
-        tts_realtime_factors=[
-            factor for r in reports for factor in r.tts_realtime_factors
-        ],
-    )
-
-
-def get_latency_report(benchmark_chat_history: list[BenchmarkMessage]) -> LatencyReport:
-    stt_latencies = []
-    vad_latencies = []
-    llm_latencies = []
-    tts_start_latencies = []
-    tts_realtime_factors = []
-
-    for i in range(len(benchmark_chat_history)):
-        m = benchmark_chat_history[i]
-
-        if isinstance(m, BenchmarkAssistantMessage):
-            realtime_factor = m.timing.received_audio_length / (
-                m.timing.audio_end - m.timing.audio_start
-            )
-            tts_realtime_factors.append(realtime_factor)
-            llm_latencies.append(m.timing.text_start - m.timing.response_created)
-            tts_start_latencies.append(m.timing.audio_start - m.timing.text_start)
-
-            if i > 0:
-                vad_latency = (
-                    m.timing.response_created
-                    - benchmark_chat_history[i - 1].timing.audio_end
-                )
-                vad_latencies.append(vad_latency)
-        elif isinstance(m, BenchmarkUserMessage):  # type: ignore
-            stt_latency = m.timing.text_start - m.timing.audio_start
-            stt_latencies.append(stt_latency)
-
-    return LatencyReport(
-        stt_latencies=stt_latencies,
-        vad_latencies=vad_latencies,
-        llm_latencies=llm_latencies,
-        tts_start_latencies=tts_start_latencies,
-        tts_realtime_factors=tts_realtime_factors,
-    )
+    return benchmark_chat_history
 
 
 def get_voice(server_url: str, basic_auth: tuple[str, str] | None) -> str:
+    """Select the first voice that the backend tells us about."""
+
     voices = requests.get(
         ws_to_http(server_url) + "/v1/voices",
         auth=basic_auth,
@@ -378,7 +276,10 @@ def get_voice(server_url: str, basic_auth: tuple[str, str] | None) -> str:
 
     voices = voices.json()
     voice = VoiceSample(**voices[0])
-    return voice.source.path_on_server
+
+    path_on_server = voice.source.path_on_server
+    assert path_on_server is not None
+    return path_on_server
 
 
 def check_health(server_url: str, basic_auth: tuple[str, str] | None):
@@ -399,7 +300,7 @@ async def _main(
     server_url: str,
     basic_auth: tuple[str, str] | None,
     listen: bool,
-):
+) -> list[BenchmarkMessage] | BaseException:
     voice = get_voice(server_url, basic_auth)
 
     websocket_url = f"{server_url.strip('/')}/v1/realtime"
@@ -426,7 +327,7 @@ def main_one_worker(
     listen: bool,
     catch_exceptions: bool = False,
     delay: float = 0.0,
-):
+) -> list[BenchmarkMessage] | BaseException:
     if delay > 0:
         time.sleep(delay)
 
@@ -439,7 +340,7 @@ def main_one_worker(
             raise
         else:
             main_logger.error(f"Error in main_one_worker: {e}")
-            return {"error": repr(e)}
+            return e
 
 
 def distribution_stats(data: list[float]) -> dict[str, float]:
@@ -494,23 +395,23 @@ def main(
                 for i in range(n_conversations)
             ),
         )
+        reports: list[list[BenchmarkMessage] | BaseException]
         try:
             reports = async_result.get()  # Wait for all results
         except KeyboardInterrupt:
             print("KeyboardInterrupt detected. Fetching partial results...")
-            reports = async_result._value  # Retrieve partial results
-            reports = [
-                report if report is not None else {"error": "KeyboardInterrupt"}
+            reports = async_result._value  # type: ignore # Retrieve partial results
+            reports: list[list[BenchmarkMessage] | BaseException] = [
+                report if report is not None else KeyboardInterrupt()
                 for report in reports
             ]
 
-    print(json.dumps(reports, indent=2, default=pydantic_encoder))
+    valid_reports = [r for r in reports if not isinstance(r, BaseException)]
+    print(json.dumps(valid_reports, indent=2, default=pydantic_encoder))
 
-    valid_reports = [r for r in reports if r["error"] is None]
+    print("Errors:", [r for r in reports if isinstance(r, BaseException)])
 
-    print("Errors:", [r["error"] for r in reports])
-
-    report = combine_latency_reports([r["latency_report"] for r in valid_reports])
+    report = combine_latency_reports([make_latency_report(r) for r in valid_reports])
     print(json.dumps(report, indent=2, default=pydantic_encoder))
     print(
         json.dumps(
@@ -526,7 +427,8 @@ def main(
         )
     )
     print(
-        "OK fraction:", sum([int(r["error"] is None) for r in reports]) / len(reports)
+        "OK fraction:",
+        sum([int(not isinstance(r, Exception)) for r in reports]) / len(reports),
     )
 
 

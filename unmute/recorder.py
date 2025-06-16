@@ -64,7 +64,7 @@ class Recorder:
 
         # Streaming?
         with self.path.open("wb") as f:
-            msgpack.dump([event.dict() for event in self._events], f)
+            f.write(msgpack.dumps([event.dict() for event in self._events]))
 
         logger.info(f"Saved recording with {len(self._events)} messages to {self.path}")
 

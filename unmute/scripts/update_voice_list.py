@@ -1,3 +1,5 @@
+"""Upload local voices to the server based on the voice list."""
+
 import asyncio
 import logging
 

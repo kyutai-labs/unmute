@@ -1,7 +1,7 @@
 [project]
 name = "unmute"
 version = "0.1.0"
-description = "Add your description here"
+description = "Make text LLMs listen and speak"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

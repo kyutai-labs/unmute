@@ -32,8 +32,8 @@ from starlette.types import ASGIApp
 import unmute.openai_realtime_api_events as ora
 from unmute import metrics as mt
 from unmute.exceptions import (
-    MissingServiceError,
-    NoTracebackError,
+    MissingServiceAtCapacity,
+    MissingServiceTimeout,
     WebSocketClosedError,
     make_ora_error,
 )
@@ -61,6 +61,8 @@ app = FastAPI()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+# We prefer to scale this by running more instances of the server than having a single
+# server handle more. This is to avoid the GIL.
 MAX_CLIENTS = 4
 SEMAPHORE = asyncio.Semaphore(MAX_CLIENTS)
 
@@ -204,13 +206,10 @@ class LimitUploadSizeForPath(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
-        # TODO: this seems to also trigger a CORS error if the size is too big, but it
-        #   should be ok because there is also a check on the client side which will
-        #   provide a better error message. This is just to prevent intentional abuse.
-        # Apply size limit only to specific POST requests
         if request.method == "POST" and request.url.path == self.path:
             if "content-length" not in request.headers:
                 return Response(status_code=status.HTTP_411_LENGTH_REQUIRED)
+
             content_length = int(request.headers["content-length"])
             if content_length > self.max_upload_size:
                 return Response(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
@@ -267,9 +266,6 @@ async def post_voice_donation(
 
 @app.websocket("/v1/realtime")
 async def websocket_route(websocket: WebSocket):
-    # The `subprotocol` argument is important because the client specifies what
-    # protocol(s) it supports and OpenAI uses "realtime" as the value. If we don't set
-    # this, the client will think this is not the right endpoint and will not connect.
     global _last_profile, _current_profile
     mt.SESSIONS.inc()
     mt.ACTIVE_SESSIONS.inc()
@@ -282,61 +278,72 @@ async def websocket_route(websocket: WebSocket):
         import inspect
 
         frame = inspect.currentframe()
-        while frame.f_back:
+        while frame is not None and frame.f_back:
             frame = frame.f_back
         _current_profile.start(caller_frame=frame)
+
     async with SEMAPHORE:
         try:
+            # The `subprotocol` argument is important because the client specifies what
+            # protocol(s) it supports and OpenAI uses "realtime" as the value. If we
+            # don't set this, the client will think this is not the right endpoint and
+            # will not connect.
             await websocket.accept(subprotocol="realtime")
+
             handler = UnmuteHandler()
             async with handler:
                 await handler.start_up()
                 await _run_route(websocket, handler)
 
         except Exception as exc:
-            if isinstance(exc, ExceptionGroup):
-                excs = exc.exceptions
-            else:
-                excs = [exc]
-            reason = None
-            for exc in excs:
-                if not isinstance(exc, NoTracebackError):
-                    logger.exception("Unexpected error: %r", exc)
-                    mt.HARD_ERRORS.inc()
-
-                if isinstance(exc, MissingServiceError):
-                    mt.FATAL_SERVICE_MISSES.inc()
-                    reason = "Too many people are connected! Please try again later."
-                elif isinstance(exc, WebSocketClosedError):
-                    logger.debug("Websocket was closed.")
-                else:
-                    reason = "Internal server error :( Complain to Kyutai"
-
-            if reason is not None:
-                mt.FORCE_DISCONNECTS.inc()
-
-                try:
-                    await websocket.send_text(
-                        make_ora_error(type="fatal", message=reason).model_dump_json()
-                    )
-                except WebSocketDisconnect:
-                    logger.warning("Failed to send error message due to disconnect.")
-
-                try:
-                    await websocket.close(
-                        code=status.WS_1011_INTERNAL_ERROR,
-                        reason=reason,
-                    )
-                except RuntimeError:
-                    logger.warning("Socket already closed.")
+            await _report_websocket_exception(websocket, exc)
         finally:
             if _current_profile is not None:
                 _current_profile.stop()
                 logger.info("Profiler saved.")
                 _last_profile = _current_profile
                 _current_profile = None
+
             mt.ACTIVE_SESSIONS.dec()
             mt.SESSION_DURATION.observe(session_watch.time())
+
+
+async def _report_websocket_exception(websocket: WebSocket, exc: Exception):
+    if isinstance(exc, ExceptionGroup):
+        exceptions = exc.exceptions
+    else:
+        exceptions = [exc]
+
+    error_message = None
+
+    for exc in exceptions:
+        if isinstance(exc, (MissingServiceAtCapacity, MissingServiceTimeout)):
+            mt.FATAL_SERVICE_MISSES.inc()
+            error_message = "Too many people are connected! Please try again later."
+        elif isinstance(exc, WebSocketClosedError):
+            logger.debug("Websocket was closed.")
+        else:
+            logger.exception("Unexpected error: %r", exc)
+            mt.HARD_ERRORS.inc()
+            error_message = "Internal server error :( Complain to Kyutai"
+
+    if error_message is not None:
+        mt.FORCE_DISCONNECTS.inc()
+
+        try:
+            await websocket.send_text(
+                make_ora_error(type="fatal", message=error_message).model_dump_json()
+            )
+        except WebSocketDisconnect:
+            logger.warning("Failed to send error message due to disconnect.")
+
+        try:
+            await websocket.close(
+                code=status.WS_1011_INTERNAL_ERROR,
+                reason=error_message,
+            )
+        except RuntimeError:
+            logger.warning("Socket already closed.")
 
 
 async def _run_route(websocket: WebSocket, handler: UnmuteHandler):
@@ -369,7 +376,10 @@ async def receive_loop(
     handler: UnmuteHandler,
     emit_queue: asyncio.Queue[ora.ServerEvent],
 ):
-    """Receive messages from the WebSocket."""
+    """Receive messages from the WebSocket.
+
+    Can decide to send messages via `emit_queue`.
+    """
     opus_reader = sphn.OpusStreamReader(SAMPLE_RATE)
     wait_for_first_opus = True
     while True:
@@ -433,7 +443,25 @@ async def receive_loop(
             handler.update_session(message.session)
             await emit_queue.put(ora.SessionUpdated(session=message.session))
         else:
-            print("Ignoring message:", str(message)[:100])
+            logger.info("Ignoring message:", str(message)[:100])
+
+
+class EmitDebugLogger:
+    def __init__(self):
+        self.last_emitted_n = 0
+        self.last_emitted_type = ""
+
+    def on_emit(self, to_emit: ora.ServerEvent):
+        if self.last_emitted_type == to_emit.type:
+            self.last_emitted_n += 1
+        else:
+            self.last_emitted_n = 1
+            self.last_emitted_type = to_emit.type
+
+        if self.last_emitted_n == 1:
+            logger.debug(f"Emitting: {to_emit.type}")
+        else:
+            logger.debug(f"Emitting ({self.last_emitted_n}): {self.last_emitted_type}")
 
 
 async def emit_loop(
@@ -441,9 +469,10 @@ async def emit_loop(
     handler: UnmuteHandler,
     emit_queue: asyncio.Queue[ora.ServerEvent],
 ):
-    last_emitted = (0, "")
+    """Send messages to the WebSocket."""
+    emit_debug_logger = EmitDebugLogger()
 
-    writer = sphn.OpusStreamWriter(SAMPLE_RATE)
+    opus_writer = sphn.OpusStreamWriter(SAMPLE_RATE)
 
     while True:
         if (
@@ -453,9 +482,6 @@ async def emit_loop(
             logger.info("emit_loop() stopped because WebSocket disconnected")
             raise WebSocketClosedError()
 
-        # logger.debug(
-        #     f"Emitting message... {websocket.client_state=} {websocket.application_state=}"
-        # )
         try:
             to_emit = emit_queue.get_nowait()
         except asyncio.QueueEmpty:
@@ -477,7 +503,8 @@ async def emit_loop(
             else:
                 _sr, audio = emitted_by_handler
                 audio = audio_to_float32(audio)
-                opus_bytes = await asyncio.to_thread(writer.append_pcm, audio)
+                opus_bytes = await asyncio.to_thread(opus_writer.append_pcm, audio)
+                # Due to buffering/chunking, Opus doesn't necessarily output something on every PCM added
                 if opus_bytes:
                     to_emit = ora.ResponseAudioDelta(
                         delta=base64.b64encode(opus_bytes).decode("utf-8"),
@@ -485,15 +512,7 @@ async def emit_loop(
                 else:
                     continue
 
-        if last_emitted[1] == to_emit.type:
-            last_emitted = (last_emitted[0] + 1, to_emit.type)
-        else:
-            last_emitted = (1, to_emit.type)
-
-        if last_emitted[0] == 1:
-            logger.debug(f"Emitting: {to_emit.type}")
-        else:
-            logger.debug(f"Emitting ({last_emitted[0]}): {last_emitted[1]}")
+        emit_debug_logger.on_emit(to_emit)
 
         await handler.recorder.add_event("server", to_emit)
 

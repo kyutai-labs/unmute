@@ -45,7 +45,6 @@ This model is freely available but requires you to accept the conditions to acce
 3. [Create an access token.](https://huggingface.co/docs/hub/en/security-tokens) You can use a fine-grained token, the only permission you need to grant is "Read access to contents of all public gated repos you can access".
 4. Add the token into your `~/.bashrc` or equivalent as `export HUGGING_FACE_HUB_TOKEN=hf_...your token here...`
 
-
 ### Start Unmute
 
 On a machine with at least 3 GPUs available, run:
@@ -150,10 +149,17 @@ docker -H ssh://llm-wrapper-gpu000 swarm join-token worker
 # and then run the command printed on the worker
 
 # Here onwards you need the following environment variables:
-# PROVIDERS_GOOGLE_CLIENT_SECRET: ask Laurent
-# HUGGING_FACE_HUB_TOKEN: a token from huggingface, you need access to https://huggingface.co/google/gemma-3-12b-it
-# NEWSAPI_API_KEY: optional - newsapi.org key, can be generated for free at https://newsapi.org/.
-#   Without this, the "Dev (news)" character won't work, but everything else will run fine.
+# HUGGING_FACE_HUB_TOKEN:
+#   How to generate: https://huggingface.co/docs/hub/en/security-tokens
+#   Used to access "gated" models that require accepting terms and conditions.
+#   You need access to https://huggingface.co/google/gemma-3-12b-it
+# PROVIDERS_GOOGLE_CLIENT_SECRET:
+#   How to generate: https://github.com/thomseddon/traefik-forward-auth?tab=readme-ov-file#google
+#   Used to require authentication to access the observability services such as Grafana and Traefik.
+# NEWSAPI_API_KEY:
+#   How to generate: https://newsapi.org/
+#   Optional. Used to fetch data for the "Dev (news)" character. If not provided,
+#   everything else will still run fine.
 ./bake_deploy_prod.sh
 # or
 ./bake_deploy_staging.sh

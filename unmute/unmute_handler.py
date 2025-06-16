@@ -52,7 +52,7 @@ from unmute.tts.text_to_speech import (
 # TTS_DEBUGGING_TEXT: str | None = "What's the difference between a bagel and a donut?"
 TTS_DEBUGGING_TEXT = None
 DO_RECORDING = False
-# AUDIO_INPUT_OVERRIDE: Path | None = Path("/Users/vaclav/audio/dog-or-cat-3.mp3")
+# AUDIO_INPUT_OVERRIDE: Path | None = Path.home() / "audio/dog-or-cat-3.mp3"
 AUDIO_INPUT_OVERRIDE: Path | None = None
 DEBUG_PLOT_HISTORY_SEC = 10.0
 
@@ -96,7 +96,6 @@ class UnmuteHandler(AsyncStreamHandler):
         self.stt_end_of_flush_time: float | None = None
         self.stt_flush_timer = Stopwatch()
 
-        # TTS needs to be restarted for every reply.
         self.tts_voice: str | None = None  # Stored separately because TTS is restarted
         self.tts_output_stopwatch = Stopwatch()
 
@@ -177,7 +176,6 @@ class UnmuteHandler(AsyncStreamHandler):
     async def _generate_response_task(self):
         generating_message_i = len(self.chatbot.chat_history)
 
-        # This needs to be below start_up_tts() so that self.tts is not None
         await self.output_queue.put(
             ora.ResponseCreated(
                 response=ora.Response(
@@ -188,7 +186,7 @@ class UnmuteHandler(AsyncStreamHandler):
         )
 
         llm_stopwatch = Stopwatch()
-        # llm = MistralStream()
+
         quest = await self.start_up_tts(generating_message_i)
         llm = VLLMStream(
             # if generating_message_i is 2, then we have a system prompt + an empty
@@ -370,11 +368,9 @@ class UnmuteHandler(AsyncStreamHandler):
         if self.chatbot.conversation_state() != "user_speaking":
             return False
 
-        # This is how much wall clock time has passed since we received the last
-        # ASR message.
-        # Assumes the ASR connection is healthy, so that stt.sent_samples is
-        # up to date.
-
+        # This is how much wall clock time has passed since we received the last ASR
+        # message. Assumes the ASR connection is healthy, so that stt.sent_samples is up
+        # to date.
         time_since_last_message = (
             stt.sent_samples / self.input_sample_rate
         ) - self.stt_last_message_time
@@ -429,7 +425,7 @@ class UnmuteHandler(AsyncStreamHandler):
             await stt.shutdown()
 
         quest = await self.quest_manager.add(Quest("stt", _init, _run, _close))
-        # We want to be sure to have the SST before starting anything.
+        # We want to be sure to have the STT before starting anything.
         await quest.get()
 
     async def _stt_loop(self, stt: SpeechToText):
@@ -505,8 +501,8 @@ class UnmuteHandler(AsyncStreamHandler):
         return await self.quest_manager.add(Quest("tts", _init, _run, _close))
 
     async def _tts_loop(self, tts: TextToSpeech, generating_message_i: int):
-        # On interruption, we swap the output queue, this will ensure that this worker
-        # can never push accidentally to the new queue upon interruption.
+        # On interruption, we swap the output queue. This will ensure that this worker
+        # can never accidentally push to the new queue if it's interrupted.
         output_queue = self.output_queue
         try:
             audio_started = None
@@ -539,8 +535,6 @@ class UnmuteHandler(AsyncStreamHandler):
                     audio = np.array(message.pcm, dtype=np.float32)
                     assert self.output_sample_rate == SAMPLE_RATE
 
-                    # Note that it's fine to put in more samples than
-                    # self.output_frame_size. FastRTC handles the buffering.
                     await output_queue.put((SAMPLE_RATE, audio))
 
                     if audio_started is None:

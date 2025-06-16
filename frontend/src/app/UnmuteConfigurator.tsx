@@ -35,7 +35,7 @@ export const DEFAULT_UNMUTE_CONFIG: UnmuteConfig = {
     type: "smalltalk",
     language: "en/fr",
   },
-  voice: "vaclav/barack_demo.wav",
+  voice: "barack_demo.wav",
   voiceName: "Missing voice",
   isCustomInstructions: false,
 };

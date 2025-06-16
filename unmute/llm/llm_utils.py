@@ -105,8 +105,8 @@ class MistralStream:
     ) -> AsyncIterator[str]:
         event_stream = await self.mistral.chat.stream_async(
             model="mistral-large-latest",
-            messages=messages,
-            temperature=1.0,  # type: ignore
+            messages=cast(Any, messages),  # It's too annoying to type this properly
+            temperature=1.0,
         )
 
         async for event in event_stream:

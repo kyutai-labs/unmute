@@ -1,7 +1,3 @@
-# deploy with
-# docker -H ssh://demo_repo buildx bake --push
-# docker -H ssh://demo70 stack deploy --with-registry-auth --prune -c docker-compose.yml moshivis
-
 services:
   traefik:
     image: traefik:v3.3.1

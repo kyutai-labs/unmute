@@ -5,11 +5,16 @@ to be explored for future refactoring.
 
 import asyncio
 import logging
+import types
 from collections.abc import Awaitable
 from functools import partial
 from typing import Any, Callable, TypeVar
 
-from unmute.exceptions import NoTracebackError
+from unmute.exceptions import (
+    MissingServiceAtCapacity,
+    MissingServiceTimeout,
+    WebSocketClosedError,
+)
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
@@ -148,13 +153,22 @@ class QuestManager:
         self._future = asyncio.Future()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
         assert self._future is not None
         logger.debug("Quest manager exiting...")
         for name, value in self.quests.items():
             try:
                 await value.remove()
-            except NoTracebackError:
+            except (
+                MissingServiceAtCapacity,
+                MissingServiceTimeout,
+                WebSocketClosedError,
+            ):
                 pass
             except Exception:
                 logger.exception(f"Error shutting down quest {name}.")

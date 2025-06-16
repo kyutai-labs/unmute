@@ -1,7 +1,6 @@
 import asyncio
 import urllib.parse
 from logging import getLogger
-from pathlib import Path
 from typing import Annotated, Any, AsyncIterator, Callable, Literal, Union, cast
 
 import msgpack
@@ -12,6 +11,7 @@ import unmute.openai_realtime_api_events as ora
 from unmute import metrics as mt
 from unmute.exceptions import MissingServiceAtCapacity
 from unmute.kyutai_constants import (
+    FRAME_TIME_SEC,
     HEADERS,
     SAMPLE_RATE,
     TEXT_TO_SPEECH_PATH,
@@ -81,23 +81,9 @@ TTSMessage = Annotated[
 TTSMessageAdapter = TypeAdapter(TTSMessage)
 
 
-VOICES_PATH = Path(
-    "/Users/vaclav/prog/stt-tts-project-page/src/assets/freesound_voices.json"
-)
-
-
 def url_escape(value: object) -> str:
     return urllib.parse.quote(str(value), safe="")
 
-
-# VOICE: str = url_escape(
-#     # "vaclav/freesound/783001_vomiting-dizziness-headachefeeling-better-now---sick-male.mp3"
-#     # "vaclav/freesound/781680_calling-for-tow-truck---country-accent.mp3"
-#     # "en1"
-#     # "vaclav/freesound/785958_pine-meadows-speech-version-2025.mp3"
-#     "vaclav/justin-ice-cream.wav"
-#     # "vaclav/etymologynerd-space-biased.wav"
-# )
 
 # Only release the audio such that it's AUDIO_BUFFER_SEC ahead of real time.
 # If the value it's too low, it might cause stuttering.
@@ -105,7 +91,7 @@ def url_escape(value: object) -> str:
 # audio, because that's controlled by emit() and WebRTC. Note that some
 # desynchronization can still occur if the TTS is less than real-time, because WebRTC
 # will decide to do some buffering of the audio on the fly.
-AUDIO_BUFFER_SEC = 0.080 * 4
+AUDIO_BUFFER_SEC = FRAME_TIME_SEC * 4
 
 
 def prepare_text_for_tts(text: str) -> str:
