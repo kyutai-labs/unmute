@@ -6,7 +6,6 @@ authorized_ids = ["public_token"]
 [modules.voice_py]
 type = "PyPost"
 path = "/api/voice"
-# This is the only way currently to get the python file.
 script = "/app/moshi-server/voice.py"
 
 [modules.voice_py.py]

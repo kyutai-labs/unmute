@@ -118,7 +118,6 @@ services:
       args:                         # Only needed for staging
         GITHUB_ORG: $GITHUB_ORG     # Only needed for staging
     environment:
-      - TTS_CONFIG=/app/configs/tts.toml
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
       - HF_TOKEN=$HUGGING_FACE_HUB_TOKEN
     volumes:
