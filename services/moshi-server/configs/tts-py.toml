@@ -7,13 +7,13 @@ authorized_ids = ["public_token"]
 type = "Py"
 path = "/api/tts_streaming"
 script = "/app/moshi-server/tts.py"
-text_tokenizer_file = "/models/test_en_fr_audio_8000.model"
+text_tokenizer_file = "hf://kyutai/unmute/test_en_fr_audio_8000.model"
 batch_size = 16
 text_bos_token = 1
 
 [modules.tts_py.py]
 log_folder = "/logs"
-moshi_weight = "/models/tts_2961f6b6@82/checkpoint.safetensors"
-config_path = "/models/tts_2961f6b6@82/config.json"
+moshi_weight = "hf://kyutai/unmute/tts_2961f6b6@82_checkpoint.safetensors"
+config_path = "hf://kyutai/unmute/tts_2961f6b6@82_config.json"
 voice_folder = "hf-snapshot://kyutai/unmute-voices"
 default_voice = "barack_demo.wav"

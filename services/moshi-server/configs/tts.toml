@@ -1,5 +1,5 @@
 log_folder = "/logs"
 moshi_weight = "/models/moshi_e9d43d50@500.safetensors"
 config_path = "/models/config.json"
-voice_folder = "/models/"
+voice_folder = "hf-snapshot://kyutai/unmute-voices"
 default_voice = "barack_demo.wav"
