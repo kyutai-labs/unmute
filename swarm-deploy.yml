@@ -120,10 +120,12 @@ services:
     environment:
       - TTS_CONFIG=/app/configs/tts.toml
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
+      - HF_TOKEN=$HUGGING_FACE_HUB_TOKEN
     volumes:
       - cargo-registry:/root/.cargo/registry
       - moshi-server-target:/app/target
       - uv-cache:/root/.cache/uv
+      - hf-cache:/root/.cache/huggingface/hub
       - /scratch/models/:/models
       - tts-logs:/logs
     stop_grace_period: 10s # change if needed
@@ -146,10 +148,15 @@ services:
   stt:
     image: rg.fr-par.scw.cloud/namespace-unruffled-tereshkova/${DOMAIN}-moshi-server:latest
     command: ["worker", "--config", "configs/stt.toml"]
+    environment:
+      #- HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
+      #- HUGGINGFACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
+      - HF_TOKEN=$HUGGING_FACE_HUB_TOKEN
     volumes:
       - cargo-registry:/root/.cargo/registry
       - moshi-server-target:/app/target
       - uv-cache:/root/.cache/uv
+      - hf-cache:/root/.cache/huggingface/hub
       - /scratch/models/:/models
       - stt-logs:/logs
     stop_grace_period: 10s # change if needed
@@ -370,6 +377,7 @@ volumes:
   cargo-registry:
   moshi-server-target:
   uv-cache:
+  hf-cache:
   voice-cloning-logs:
   letsencrypt:
   prometheus-data:
