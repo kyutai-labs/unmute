@@ -149,8 +149,6 @@ services:
     image: rg.fr-par.scw.cloud/namespace-unruffled-tereshkova/${DOMAIN}-moshi-server:latest
     command: ["worker", "--config", "configs/stt.toml"]
     environment:
-      #- HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
-      #- HUGGINGFACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
       - HF_TOKEN=$HUGGING_FACE_HUB_TOKEN
     volumes:
       - cargo-registry:/root/.cargo/registry
