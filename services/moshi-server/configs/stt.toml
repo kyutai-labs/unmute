@@ -6,9 +6,9 @@ authorized_ids = ["public_token"]
 [modules.asr]
 path = "/api/asr-streaming"
 type = "BatchedAsr"
-lm_model_file = "hf://kyutai/unmute/asr-70f8f0ea@500.rs.safetensors"
-text_tokenizer_file = "hf://kyutai/unmute/test_en_fr_audio_8000.model"
-audio_tokenizer_file = "hf://kyutai/unmute/tokenizer-e351c8d8-checkpoint125.safetensors"
+lm_model_file = "hf://kyutai/stt-1b-en_fr-candle/model.safetensors"
+text_tokenizer_file = "hf://kyutai/stt-1b-en_fr-candle/tokenizer_en_fr_audio_8000.model"
+audio_tokenizer_file = "hf://kyutai/stt-1b-en_fr-candle/mimi-pytorch-e351c8d8@125.safetensors"
 asr_delay_in_tokens = 6
 batch_size = 64
 conditioning_learnt_padding = true
