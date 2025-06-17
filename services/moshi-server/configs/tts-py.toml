@@ -14,5 +14,5 @@ text_bos_token = 1
 log_folder = "/logs"
 moshi_weight = "hf://kyutai/unmute/tts_2961f6b6@82_checkpoint.safetensors"
 config_path = "hf://kyutai/unmute/tts_2961f6b6@82_config.json"
-voice_folder = "hf-snapshot://kyutai/unmute-voices"
-default_voice = "barack_demo.wav"
+voice_folder = "hf-snapshot://kyutai/unmute-voices/unmute-prod-website/*.safetensors"
+default_voice = "unmute-prod-website/barack_demo.wav"

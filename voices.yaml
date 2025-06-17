@@ -4,7 +4,7 @@
     type: smalltalk
   source:
     source_type: file
-    path_on_server: p329_022.wav
+    path_on_server: unmute-prod-website/p329_022.wav
     description: From the Device Recorded VCTK dataset.
     description_link: https://datashare.ed.ac.uk/handle/10283/3038
 - name: Quiz show
@@ -20,7 +20,7 @@
       name: "Request #42 - Hmm, I don't know.wav"
       username: InspectorJ
       license: https://creativecommons.org/licenses/by/4.0/
-    path_on_server: freesound/519189_request-42---hmm-i-dont-knowwav.mp3
+    path_on_server: unmute-prod-website/freesound/519189_request-42---hmm-i-dont-knowwav.mp3
 - name: Gertrude
   good: true
   instructions:
@@ -34,14 +34,14 @@
       name: Why is there education.wav
       username: tender_buttons
       license: http://creativecommons.org/licenses/by/3.0/
-    path_on_server: freesound/440565_why-is-there-educationwav.mp3
+    path_on_server: unmute-prod-website/freesound/440565_why-is-there-educationwav.mp3
 - name: Dev (news)
   good: true
   instructions:
     type: news
   source:
     source_type: file
-    path_on_server: developer-1.mp3
+    path_on_server: unmute-prod-website/developer-1.mp3
     description: This is the voice of Václav Volhejn from Kyutai.
 - name: Explanation
   good: true
@@ -49,7 +49,7 @@
     type: unmute_explanation
   source:
     source_type: file
-    path_on_server: ex04_narration_longform_00001.wav
+    path_on_server: unmute-prod-website/ex04_narration_longform_00001.wav
     description: This voice comes from the Expresso dataset.
     description_link: https://speechbot.github.io/expresso/
 - name: Charles
@@ -59,7 +59,7 @@
     text: Tu es le général de Gaulle. Pour ton premier tour de parole, tu te présentes en français en 2 phrases. Si on te répond en français, tu parles en français. Si on te répond en anglais, tu parles en anglais, mais tu utilises au moins un mot français par phrase, entre guillemets français. Quand on te pose une question, tu réponds en parlant d'une anecdote historique que tu as vécu, comme une rencontre ou une discussion. Tu fais preuve d'une sensibilité particulière à la souffrance de tous les peuples du monde au cours de l'histoire. Tu utilises un langage grave et solennel.
   source:
     source_type: file
-    path_on_server: degaulle-2.wav
+    path_on_server: unmute-prod-website/degaulle-2.wav
     description: From a recording of Charles de Gaulle's speech.
     description_link: https://www.youtube.com/watch?v=AUS5LHDkwP0
 - name: Développeuse
@@ -69,7 +69,7 @@
     language: fr
   source:
     source_type: file
-    path_on_server: developpeuse-3.wav
+    path_on_server: unmute-prod-website/developpeuse-3.wav
     description: This is the voice of one of the developers at Kyutai.
 - name: Fabieng
   good: true
@@ -79,5 +79,5 @@
     language: fr
   source:
     source_type: file
-    path_on_server: fabieng-enhanced-v2.wav
+    path_on_server: unmute-prod-website/fabieng-enhanced-v2.wav
     description: Fabieng is voice acted by Neil Zeghidour from Kyutai.

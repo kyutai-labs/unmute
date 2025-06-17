@@ -10,7 +10,7 @@ from typing import Literal
 
 import requests
 import tqdm
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field
 from ruamel.yaml import YAML
 
 logger = logging.getLogger(__name__)
@@ -54,14 +54,7 @@ class FreesoundVoiceSource(BaseModel):
     url: str
     start_time: int | None = None
     sound_instance: FreesoundSoundInstance | None = None
-
-    @computed_field
-    @property
-    def path_on_server(self) -> str | None:
-        if self.sound_instance is None:
-            return None
-
-        return str(Path("freesound") / self.sound_instance.get_filename())
+    path_on_server: str
 
 
 def get_sound_id_from_url(url: str) -> int:
