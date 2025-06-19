@@ -3,7 +3,7 @@
 For production deployments like [unmute.sh](https://unmute.sh), we use Docker Swarm rather than Docker Compose.
 The two have a similar syntax, but Docker Compose is meant for running on a single machine whereas Docker Swarm scales multiple. You can think of Docker Swarm as "Multi-node Docker Compose".
 
-The [swarm config file](./swarm-deploy.yml) is well documented. Feel free to read it to understand better how the stack works. The [Docker swarm docs](https://docs.docker.com/engine/swarm/) are also a good read.
+The [swarm config file](./swarm-deploy.yml) is well-documented. Feel free to read it to better understand how the stack works. The [Docker swarm docs](https://docs.docker.com/engine/swarm/) are also a good read.
 
 All instructions are to execute from a client machine, and from this repo, not directly on the machine in the swarm.
 
