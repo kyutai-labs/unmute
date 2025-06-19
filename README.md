@@ -34,9 +34,9 @@ We provide in this repository multiple ways of deploying your own [unmute.sh](un
 
 | Name                      | Number of gpus | Number of machines | Difficulty | Documented | Kyutai support |
 |---------------------------|----------------|--------------------|------------|------------|----------------|
-| Without Docker            | 1 to 3         | 1 to 5             | Easy       |✅         |✅              |
 | Docker compose single-gpu | 1              | 1                  | Very easy  |✅         |✅              |
 | Docker compose multi-gpu  | 3              | 1                  | Very easy  |✅         |✅              |
+| Without Docker            | 1 to 3         | 1 to 5             | Easy       |✅         |✅              |
 | Docker swarm              | 1 to ~100      | 1 to ~100          | Medium     |✅         |❌              |
 
 

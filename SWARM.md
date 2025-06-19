@@ -44,8 +44,6 @@ If you want to change the docker install directory (that contains images and vol
 
 and then restart docker with `service docker restart`
 
-Note that currently, you'll have to scp `/scratch/models` to all nodes of the swarm because we can't use http to read our models/voices.
-
 ### Scaling the swarm
 
 If you have heavy load and want more resources (gpu/disk/ram/cpu) in your swarm, there are two steps:
@@ -78,10 +76,10 @@ etc...
 
 ## urls:
 * <https://unmute.sh>
-* <https://traefik-delicious-burrito.unmute.sh>
-* <https://grafana-delicious-burrito.unmute.sh>
-* <https://prometheus-delicious-burrito.unmute.sh>
-* <https://portainer-delicious-burrito.unmute.sh>
+* <https://traefik.unmute.sh>
+* <https://grafana.unmute.sh>
+* <https://prometheus.unmute.sh>
+* <https://portainer.unmute.sh>
 
 ## Other
 
