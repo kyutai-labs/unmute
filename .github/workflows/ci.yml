@@ -7,19 +7,20 @@ on:
   pull_request:
 
 jobs:
-  build-docker-images:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up a builder (we don't want to load the images)
-        run: docker buildx create --name mybuilder --use
-
-      - name: Build all docker images
-        run: docker buildx bake --progress=plain -f swarm-deploy.yml workers frontend tts
-        env:
-          DOMAIN: dummy
+  # Enable again when we don't have private dependencies
+  #build-docker-images:
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - name: Checkout code
+  #      uses: actions/checkout@v3
+#
+  #    - name: Set up a builder (we don't want to load the images)
+  #      run: docker buildx create --name mybuilder --use
+#
+  #    - name: Build all docker images
+  #      run: docker buildx bake --progress=plain -f swarm-deploy.yml workers frontend tts
+  #      env:
+  #        DOMAIN: dummy
 
   pre-commit:
     runs-on: ubuntu-latest
