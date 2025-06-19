@@ -142,7 +142,7 @@ ALLOWED_LICENSES = [
 
 def download_sound(source: FreesoundVoiceSource | str):
     if isinstance(source, str):
-        source = FreesoundVoiceSource(url=source)
+        source = FreesoundVoiceSource(url=source, path_on_server="filled in later")
     else:
         source = deepcopy(source)
 
@@ -161,7 +161,7 @@ def download_sound(source: FreesoundVoiceSource | str):
         )
 
     (OUTPUT_DIR / "raw").mkdir(exist_ok=True, parents=True)
-    (OUTPUT_DIR / "voices").mkdir(exist_ok=True, parents=True)
+    (OUTPUT_DIR / "voices" / "unmute-prod-website").mkdir(exist_ok=True, parents=True)
 
     # Cache the raw file to avoid downloading it again
     raw_path = OUTPUT_DIR / "raw" / sound_instance.get_filename()
@@ -171,11 +171,16 @@ def download_sound(source: FreesoundVoiceSource | str):
         with raw_path.open("wb") as f:
             f.write(response.content)
 
-    output_path = OUTPUT_DIR / "voices" / sound_instance.get_filename()
+    output_path = (
+        OUTPUT_DIR / "voices" / "unmute-prod-website" / sound_instance.get_filename()
+    )
     if not output_path.exists():
         process_sound(raw_path, output_path, start_time=source.start_time or 0)
 
     source.sound_instance = sound_instance
+    source.path_on_server = str(
+        Path("unmute-prod-website/freesound") / sound_instance.get_filename()
+    )
 
     return output_path, source
 

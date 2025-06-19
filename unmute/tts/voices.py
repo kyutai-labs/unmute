@@ -25,7 +25,7 @@ from unmute.tts.freesound_download import (
 TTS_OUTPUT_CACHE_DIR = OUTPUT_DIR / "tts-outputs"
 CFG_PARAM = "cfg_alpha=1.5"
 
-SERVER_VOICES_DIR_DEV = Path.home() / "models" / "tts-voices"
+SERVER_VOICES_DIR_DEV = Path("/home") / Path.home().stem / "models" / "tts-voices"
 DEV_SERVER = "pod2"
 
 SERVER_VOICES_DIR_PROD = Path("/scratch/models/")
