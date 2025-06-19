@@ -48,7 +48,7 @@ Note that currently, you'll have to scp `/scratch/models` to all nodes of the sw
 
 ### Scaling the swarm
 
-If you have heavy load and want more ressources (gpu/disk/ram/cpu) in your swarm, there are two steps:
+If you have heavy load and want more resources (gpu/disk/ram/cpu) in your swarm, there are two steps:
 1) Add new machines to the swarm. For this, go to the manager and run `docker swarm join-token worker`. It will give you the command to run on the new node to join the swarm.
 2) Once the new node has joined the swarm, increase the number of containers for the services you want to scale. For example `docker service scale llm-wrapper_llm=10`.
 
