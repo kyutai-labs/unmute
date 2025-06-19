@@ -30,9 +30,21 @@ graph LR
 > [!NOTE]
 > If something isn't working for you, don't hesistate to open an issue. We'll do our best to help you figure out what's wrong.
 
+We provide in this repository multiple ways of deploying your own [unmute.sh](unmute.sh):
+
+| Name                      | Number of gpus | Number of machines | Difficulty | Documented | Kyutai support |
+|---------------------------|----------------|--------------------|------------|------------|----------------|
+| Without Docker            | 1 to 3         | 1 to 5             | Easy       |✅         |✅              |
+| Docker compose single-gpu | 1              | 1                  | Very easy  |✅         |✅              |
+| Docker compose multi-gpu  | 3              | 1                  | Very easy  |✅         |✅              |
+| Docker swarm              | 1 to ~100      | 1 to ~100          | Medium     |✅         |❌              |
+
+
 Since Unmute is a complex system with many services that need to be running at the same time, we recommend using [**Docker Compose**](https://docs.docker.com/compose/) to run Unmute.
 It allows you to start or stop all services using a single command.
 Since the services are Docker containers, you get a reproducible environment without having to worry about dependencies.
+
+While we support deploying with Docker compose and without Docker, the Docker Swarm deployment is only given to show how we deploy and scale [unmute.sh](unmute.sh). It looks a lot like the compose files, but since debugging multi-nodes applications is hard, we cannot help you debug the swarm deployment.
 
 ### Gemma 3 access
 
@@ -131,133 +143,9 @@ This is a common requirement so we would appreciate a contribution to support to
 
 ## Production deployment with Docker Swarm
 
-For production deployments like [unmute.sh](https://unmute.sh), we use Docker Swarm rather than Docker Compose.
-The two have a similar syntax, but Docker Compose is meant for running on a single machine whereas Docker Swarm scales multiple.
+If you're curious to know how we deploy and scale [unmute.sh](https://unmute.sh), take a look at our docs
+on the [swarm deployments](./SWARM.md).
 
-All instructions are to execute from a client machine, and from this repo, not directly on the machine in the swarm.
-
-```bash
-# If new machine
-scp setup_gpu_swarm_node.py llm-wrapper-gpu000:/root/
-ssh llm-wrapper-gpu000 python3 /root/setup_gpu_swarm_node.py
-
-# Manager only, the command to declare it as being a manager. If a swarm is already up, you don't need it.
-docker -H ssh://llm-wrapper-gpu000 swarm init
-
-# If you want to connect a new worker to the manager, get the command to run by doing
-docker -H ssh://llm-wrapper-gpu000 swarm join-token worker
-# and then run the command printed on the worker
-
-# Here onwards you need the following environment variables:
-# HUGGING_FACE_HUB_TOKEN:
-#   How to generate: https://huggingface.co/docs/hub/en/security-tokens
-#   Used to access "gated" models that require accepting terms and conditions.
-#   You need access to https://huggingface.co/google/gemma-3-12b-it
-# PROVIDERS_GOOGLE_CLIENT_SECRET:
-#   How to generate: https://github.com/thomseddon/traefik-forward-auth?tab=readme-ov-file#google
-#   Used to require authentication to access the observability services such as Grafana and Traefik.
-# NEWSAPI_API_KEY:
-#   How to generate: https://newsapi.org/
-#   Optional. Used to fetch data for the "Dev (news)" character. If not provided,
-#   everything else will still run fine.
-./bake_deploy_prod.sh
-# or
-./bake_deploy_staging.sh
-```
-
-If you want to change the docker install directory (that contains images and volumes), change the `/etc/docker/daemon.json` and add:
-
-```
-  "data-root": "/new/docker-data"
-```
-
-and then restart docker with `service docker restart`
-
-Note that currently, you'll have to scp `/scratch/models` to all nodes of the swarm because we can't use http to read our models/voices.
-
-### Restarting a service
-Restart a given service (for example `llm-wrapper_tts` to get new voices when the voice list changes)
-
-```bash
-docker -H ssh://llm-wrapper-gpu000 service update --force llm-wrapper_something
-```
-
-### Updating a single service
-You might not trust a `docker stack deploy` to update only a service that has changed. Notably because the definition
-of "changed" is different for humans and for Docker services (copying a .git directory with more branches might be considered
-a change, even though it does not change anything to the code). In this case, if you want to update only one service, you can do so without `docker stack deploy` and without `swarm-deploy.yml` by using `docker service update`. Everything that `docker stack deploy` can change on services, `docker service update` can do so too.
-
-For example, you might want to update the docker image of the frontend service with:
-```bash
-docker service update --image rg.fr-par.scw.cloud/namespace-unruffled-tereshkova/llm-wrapper-frontend:latest --with-registry-auth llm-wrapper_frontend
-```
-a volume can be added with
-```bash
-docker service update --mount-add type=volume,source=other-volume,target=/somewhere-else llm-wrapper_frontend
-```
-etc...
-
-## urls:
-* <https://unmute.sh>
-* <https://traefik-delicious-burrito.unmute.sh>
-* <https://grafana-delicious-burrito.unmute.sh>
-* <https://prometheus-delicious-burrito.unmute.sh>
-* <https://portainer-delicious-burrito.unmute.sh>
-
-## Other
-
-Run the llm benchmark with
-
-```bash
-docker exec -it $(docker ps --format '{{.Names}}' | grep benchmark-llm) bash /run_bench.sh
-```
-
-
-## Swarm services
-
-### Main app
-
-```mermaid
-graph LR
-    UB[User browser] --> T((Traefik))
-    T --> B(Backend)
-    T --> F(Frontend)
-    B --> TTS(TTS)
-    B --> STT(STT)
-    B --> LLM(LLM)
-    B --> R(Redis)
-    B --> V(Voice cloning)
-    Bench(Benchmark llm) --> LLM
-```
-
-### Monitoring
-
-The production deployment contains additional goodies for monitoring:
-- [Prometheus](https://prometheus.io/) to store metrics, e.g. the number of active connections and latency measurements
-- [Grafana](https://grafana.com/) to visualize those metrics
-- [Portainer](https://www.portainer.io/) for checking the status of the containers
-
-```mermaid
-graph LR
-    UB[Dev browser] --> T((Traefik))
-    T --> TFA(Traefik forward auth 'Google Oauth')
-    TFA --> G(Grafana)
-    TFA --> GWP(Grafana with password)
-    TFA --> T
-    TFA --> Port(Portainer)
-    TFA --> Prom(Prometheus)
-    G --> Prom
-    GWP --> Prom
-    Port --> A(Agent)
-    Prom --> B(Backend)
-    Prom --> STT(STT)
-    Prom --> TTS(TTS)
-    Prom --> T
-    Prom --> LLM(LLM)
-    Prom --> V(Voice cloning)
-    Prom --> C(Cadvisor)
-    Prom --> D(Docker daemon)
-```
 
 ## Developing Unmute
 
