@@ -15,7 +15,7 @@ if [[ -n $(git status --porcelain) ]]; then
 fi
 
 export DOMAIN=unmute.sh
-export LLM_MODEL=mistralai/Mistral-Small-24B-Instruct-2501
+export KYUTAI_LLM_MODEL=mistralai/Mistral-Small-24B-Instruct-2501
 export DOCKER_HOST=ssh://root@${DOMAIN}
 
 echo "If you get an connection error, do: ssh root@${DOMAIN}"

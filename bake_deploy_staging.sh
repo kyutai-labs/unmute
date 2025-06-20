@@ -2,7 +2,7 @@
 set -ex
 
 export DOMAIN=unmute-staging.kyutai.io
-export LLM_MODEL=google/gemma-3-1b-it
+export KYUTAI_LLM_MODEL=google/gemma-3-1b-it
 export DOCKER_HOST=ssh://root@${DOMAIN}
 
 echo "If you get an connection error, do: ssh root@${DOMAIN}"
