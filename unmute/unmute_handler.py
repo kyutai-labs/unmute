@@ -419,7 +419,19 @@ class UnmuteHandler(AsyncStreamHandler):
     async def start_up(self):
         await self.start_up_stt()
         if self.recorder is not None:
-            quest = Quest.from_run_step("recorder", self.recorder.run)
+
+            async def _init() -> Recorder:
+                assert self.recorder is not None
+                return self.recorder
+
+            async def _run(recorder: Recorder):
+                await recorder.run()
+
+            async def _close(recorder: Recorder):
+                await recorder.shutdown()
+
+            quest = Quest("recorder", _init, _run, _close)
+
             await self.quest_manager.add(quest)
         self.waiting_for_user_start_time = self.audio_received_sec()
 
