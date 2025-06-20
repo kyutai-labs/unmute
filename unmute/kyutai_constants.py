@@ -12,6 +12,7 @@ LLM_SERVER = os.environ.get("KYUTAI_LLM_URL", "http://localhost:8091")
 VOICE_CLONING_SERVER = os.environ.get(
     "KYUTAI_VOICE_CLONING_URL", "http://localhost:8092"
 )
+# If None, a dict-based cache will be used instead of Redis
 REDIS_SERVER = os.environ.get("KYUTAI_REDIS_URL")
 
 SPEECH_TO_TEXT_PATH = "/api/asr-streaming"
@@ -21,6 +22,10 @@ repo_root = Path(__file__).parents[1]
 VOICE_DONATION_DIR = Path(
     os.environ.get("KYUTAI_VOICE_DONATION_DIR", repo_root / "voices" / "donation")
 )
+
+# If None, recordings will not be saved
+_recordings_dir = os.environ.get("KYUTAI_RECORDINGS_DIR")
+RECORDINGS_DIR = Path(_recordings_dir) if _recordings_dir else None
 
 # Also checked on the frontend, see constant of the same name
 MAX_VOICE_FILE_SIZE_MB = 4

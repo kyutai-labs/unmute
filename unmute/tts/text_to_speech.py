@@ -140,8 +140,7 @@ class TextToSpeech(ServiceWithStartup):
         voice: str | None = None,
     ):
         self.tts_instance = tts_instance
-        # Set to a dummy unstarted recorder to avoid having to check for None everywhere
-        self.recorder = recorder or Recorder()
+        self.recorder = recorder
         self.websocket: websockets.ClientConnection | None = None
 
         self.time_since_first_text_sent = Stopwatch(autostart=False)
@@ -297,12 +296,13 @@ class TextToSpeech(ServiceWithStartup):
                     )
                     self.received_samples += len(message.pcm)
 
-                    await self.recorder.add_event(
-                        "server",
-                        ora.UnmuteResponseAudioDeltaReady(
-                            number_of_samples=len(message.pcm)
-                        ),
-                    )
+                    if self.recorder is not None:
+                        await self.recorder.add_event(
+                            "server",
+                            ora.UnmuteResponseAudioDeltaReady(
+                                number_of_samples=len(message.pcm)
+                            ),
+                        )
 
                 elif isinstance(message, TTSTextMessage):
                     mt.TTS_RECV_WORDS.inc()

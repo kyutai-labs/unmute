@@ -9,8 +9,7 @@ from pydantic import BaseModel, Field
 
 import unmute.openai_realtime_api_events as ora
 
-RECORDINGS_DIR = Path(__file__).parents[1] / "recordings"
-SAVE_EVERY_N_EVENTS = 10
+SAVE_EVERY_N_EVENTS = 100
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +23,15 @@ class RecorderEvent(BaseModel):
 
 
 class Recorder:
-    def __init__(self):
-        self.path = RECORDINGS_DIR / (make_filename() + ".jsonl")
-        RECORDINGS_DIR.mkdir(exist_ok=True)
-        self._events = []
+    """Record the events sent between the client and the server to a file.
+
+    Doesn't include the user audio for privacy reasons.
+    """
+
+    def __init__(self, recordings_dir: Path):
+        self.path = recordings_dir / (make_filename() + ".jsonl")
+        recordings_dir.mkdir(exist_ok=True)
+        self._unsaved_events = []
         self.queue = asyncio.Queue()
         # The lock lets us know if the recorder is running.
         self.loop_lock = asyncio.Lock()
@@ -53,12 +57,14 @@ class Recorder:
         async with self.loop_lock:
             while True:
                 event = await self.queue.get()
-                self._events.append(event)
+                self._unsaved_events.append(event)
 
-                if len(self._events) % SAVE_EVERY_N_EVENTS == 0:
+                if len(self._unsaved_events) >= SAVE_EVERY_N_EVENTS:
                     with self.path.open("a") as f:
-                        for e in self._events[-10:]:
+                        for e in self._unsaved_events:
                             f.write(e.model_dump_json() + "\n")
+
+                        self._unsaved_events = []
 
 
 def make_filename() -> str:

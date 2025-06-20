@@ -22,6 +22,7 @@ from unmute.audio_input_override import AudioInputOverride
 from unmute.exceptions import make_ora_error
 from unmute.kyutai_constants import (
     FRAME_TIME_SEC,
+    RECORDINGS_DIR,
     SAMPLE_RATE,
     SAMPLES_PER_FRAME,
 )
@@ -51,7 +52,7 @@ from unmute.tts.text_to_speech import (
 # TTS_DEBUGGING_TEXT: str | None = "What's 'Hello world'?"
 # TTS_DEBUGGING_TEXT: str | None = "What's the difference between a bagel and a donut?"
 TTS_DEBUGGING_TEXT = None
-DO_RECORDING = False
+
 # AUDIO_INPUT_OVERRIDE: Path | None = Path.home() / "audio/dog-or-cat-3.mp3"
 AUDIO_INPUT_OVERRIDE: Path | None = None
 DEBUG_PLOT_HISTORY_SEC = 10.0
@@ -89,7 +90,13 @@ class UnmuteHandler(AsyncStreamHandler):
         )
         self.n_samples_received = 0  # Used for measuring time
         self.output_queue: asyncio.Queue[HandlerOutput] = asyncio.Queue()
-        self.recorder = Recorder()
+        self.recorder = Recorder(RECORDINGS_DIR) if RECORDINGS_DIR else None
+        logger.info(
+            f"Recordings will be saved into directory: {RECORDINGS_DIR}"
+            if RECORDINGS_DIR
+            else "Recordings are disabled."
+        )
+
         self.quest_manager = QuestManager()
 
         self.stt_last_message_time: float = 0
@@ -169,7 +176,6 @@ class UnmuteHandler(AsyncStreamHandler):
             delta, role, generating_message_i=generating_message_i
         )
 
-        await self.output_queue.put(self.get_gradio_update())
         return is_new_message
 
     async def _generate_response(self):
@@ -412,7 +418,7 @@ class UnmuteHandler(AsyncStreamHandler):
 
     async def start_up(self):
         await self.start_up_stt()
-        if DO_RECORDING:
+        if self.recorder is not None:
             quest = Quest.from_run_step("recorder", self.recorder.run)
             await self.quest_manager.add(quest)
         self.waiting_for_user_start_time = self.audio_received_sec()
