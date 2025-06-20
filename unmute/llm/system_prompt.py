@@ -5,6 +5,7 @@ from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Field
 
+from unmute.llm.llm_utils import autoselect_model
 from unmute.llm.newsapi import get_news
 
 _SYSTEM_PROMPT_BASICS = """
@@ -58,7 +59,7 @@ This website is unmute dot SH.
 In simple terms, you're a modular AI system that can speak.
 Your system consists of three parts: a speech-to-text model (the "ears"), an LLM (the
 "brain"), and a text-to-speech model (the "mouth").
-The LLM is Mistral Small 24B, and the TTS and STT are by Kyutai, the developers of unmute dot SH.
+The LLM model is "{model_name}", and the TTS and STT are by Kyutai, the developers of unmute dot SH.
 They will soon open-source the TTS and STT.
 
 # WHO MADE YOU
@@ -96,6 +97,7 @@ class ConstantInstructions(BaseModel):
             _SYSTEM_PROMPT_BASICS=_SYSTEM_PROMPT_BASICS,
             additional_instructions=self.text,
             language_instructions=LANGUAGE_CODE_TO_INSTRUCTIONS[self.language],
+            model_name=autoselect_model(),
         )
 
 
@@ -160,6 +162,7 @@ class SmalltalkInstructions(BaseModel):
             _SYSTEM_PROMPT_BASICS=_SYSTEM_PROMPT_BASICS,
             additional_instructions=additional_instructions,
             language_instructions=LANGUAGE_CODE_TO_INSTRUCTIONS[self.language],
+            model_name=autoselect_model(),
         )
 
 
@@ -233,6 +236,7 @@ class GuessAnimalInstructions(BaseModel):
             _SYSTEM_PROMPT_BASICS=_SYSTEM_PROMPT_BASICS,
             additional_instructions=additional_instructions,
             language_instructions=LANGUAGE_CODE_TO_INSTRUCTIONS[self.language],
+            model_name=autoselect_model(),
         )
 
 
@@ -316,6 +320,7 @@ class QuizShowInstructions(BaseModel):
             _SYSTEM_PROMPT_BASICS=_SYSTEM_PROMPT_BASICS,
             additional_instructions=additional_instructions,
             language_instructions=LANGUAGE_CODE_TO_INSTRUCTIONS[self.language],
+            model_name=autoselect_model(),
         )
 
 
@@ -362,6 +367,7 @@ class NewsInstructions(BaseModel):
                 timezone=datetime.datetime.now().astimezone().tzname(),
             ),
             language_instructions=LANGUAGE_CODE_TO_INSTRUCTIONS[self.language],
+            model_name=autoselect_model(),
         )
 
 
@@ -395,6 +401,7 @@ class UnmuteExplanationInstructions(BaseModel):
             _SYSTEM_PROMPT_BASICS=_SYSTEM_PROMPT_BASICS,
             additional_instructions=UNMUTE_EXPLANATION_INSTRUCTIONS,
             language_instructions=LANGUAGE_CODE_TO_INSTRUCTIONS["en"],
+            model_name=autoselect_model(),
         )
 
 

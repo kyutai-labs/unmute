@@ -94,6 +94,7 @@ services:
       - KYUTAI_VOICE_DONATION_DIR=/voice-donation
       - NEWSAPI_API_KEY=$NEWSAPI_API_KEY
       - KYUTAI_RECORDINGS_DIR=/recordings
+      - LLM_MODEL=$LLM_MODEL
     volumes:
       - /scratch/voice-donation/:/voice-donation
       - recordings:/recordings

@@ -120,8 +120,10 @@ def get_openai_client(server_url: str = LLM_SERVER) -> AsyncOpenAI:
 
 
 @cache
-def autoselect_model(base_url: str) -> str:
-    client_sync = OpenAI(api_key="EMPTY", base_url=base_url)
+def autoselect_model() -> str:
+    if (LLM_MODEL := os.environ.get("LLM_MODEL")) is not None:
+        return LLM_MODEL
+    client_sync = OpenAI(api_key="EMPTY", base_url=get_openai_client().base_url)
     models = client_sync.models.list()
     if len(models.data) != 1:
         raise ValueError("There are multiple models available. Please specify one.")
@@ -132,7 +134,6 @@ class VLLMStream:
     def __init__(
         self,
         client: AsyncOpenAI,
-        model: str | None = None,
         temperature: float = 1.0,
     ):
         """
@@ -140,12 +141,7 @@ class VLLMStream:
         one model, it will use that one. Otherwise, it will raise.
         """
         self.client = client
-
-        if model is None:
-            self.model = autoselect_model(str(client.base_url))
-        else:
-            self.model = model
-
+        self.model = autoselect_model()
         self.temperature = temperature
 
     async def chat_completion(
