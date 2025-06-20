@@ -93,8 +93,10 @@ services:
       - KYUTAI_REDIS_URL=redis://redis:6379
       - KYUTAI_VOICE_DONATION_DIR=/voice-donation
       - NEWSAPI_API_KEY=$NEWSAPI_API_KEY
+      - KYUTAI_RECORDINGS_DIR=/recordings
     volumes:
       - /scratch/voice-donation/:/voice-donation
+      - recordings:/recordings
     deploy:
       labels:
         # Reachable with /api but removes the /api prefix from the URL after routing
@@ -440,3 +442,4 @@ volumes:
   tts-logs:
   stt-logs:
   vllm-cache:
+  recordings:

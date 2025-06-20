@@ -124,6 +124,10 @@ class UnmuteHandler(AsyncStreamHandler):
         else:
             self.audio_input_override = None
 
+    async def cleanup(self):
+        if self.recorder is not None:
+            await self.recorder.cleanup()
+
     @property
     def stt(self) -> SpeechToText | None:
         try:
@@ -418,21 +422,6 @@ class UnmuteHandler(AsyncStreamHandler):
 
     async def start_up(self):
         await self.start_up_stt()
-        if self.recorder is not None:
-
-            async def _init() -> Recorder:
-                assert self.recorder is not None
-                return self.recorder
-
-            async def _run(recorder: Recorder):
-                await recorder.run()
-
-            async def _close(recorder: Recorder):
-                await recorder.shutdown()
-
-            quest = Quest("recorder", _init, _run, _close)
-
-            await self.quest_manager.add(quest)
         self.waiting_for_user_start_time = self.audio_received_sec()
 
     async def __aexit__(self, *exc: Any) -> None:

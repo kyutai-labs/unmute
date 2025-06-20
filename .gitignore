@@ -22,3 +22,5 @@ next-env.d.ts
 certs/
 
 volumes/
+CLAUDE.md
+.claude/settings.local.json

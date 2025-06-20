@@ -372,6 +372,7 @@ async def _run_route(websocket: WebSocket, handler: UnmuteHandler):
             tg.create_task(handler.quest_manager.wait(), name="quest_manager.wait()")
             tg.create_task(debug_running_tasks(), name="debug_running_tasks()")
     finally:
+        await handler.cleanup()
         logger.info("websocket_route() finished")
 
 
