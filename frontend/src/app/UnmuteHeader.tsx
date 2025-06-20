@@ -41,7 +41,7 @@ const UnmuteHeader = () => {
         <div className="flex flex-col gap-3">
           <p>
             This is a cascaded system made by Kyutai: our speech-to-text
-            transcribes what you say, an LLM (we use Gemma 3 12B) generates the
+            transcribes what you say, an LLM (we use Mistrall Small 24B) generates the
             text of the response, and we then use our text-to-speech model to
             say it out loud.
           </p>
@@ -50,7 +50,7 @@ const UnmuteHeader = () => {
             irony, etc., they provide unmatched modularity: since the three
             parts are separate, you can <em>Unmute</em> any LLM you want without
             any finetuning or adaptation! In this demo, you can get a feel for
-            this versatility by tuning the system prompt of Gemma 3 to handcraft
+            this versatility by tuning the system prompt of the LLM to handcraft
             the personality of your digital interlocutor, and independently
             changing the voice of the TTS.
           </p>

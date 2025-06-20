@@ -58,8 +58,8 @@ AUDIO_INPUT_OVERRIDE: Path | None = None
 DEBUG_PLOT_HISTORY_SEC = 10.0
 
 USER_SILENCE_TIMEOUT = 7.0
-FIRST_MESSAGE_TEMPERATURE = 1.3
-FURTHER_MESSAGES_TEMPERATURE = 0.8
+FIRST_MESSAGE_TEMPERATURE = 0.7
+FURTHER_MESSAGES_TEMPERATURE = 0.3
 # For this much time, the VAD does not interrupt the bot. This is needed because at
 # least on Mac, the echo cancellation takes a while to kick in, at the start, so the ASR
 # sometimes hears a bit of the TTS audio and interrupts the bot. Only happens on the
@@ -215,6 +215,7 @@ class UnmuteHandler(AsyncStreamHandler):
         )
 
         messages = self.chatbot.preprocessed_messages()
+        print(messages)
 
         self.tts_output_stopwatch = Stopwatch(autostart=False)
         tts = None

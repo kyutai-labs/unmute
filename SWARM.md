@@ -23,7 +23,7 @@ docker -H ssh://llm-wrapper-gpu000 swarm join-token worker
 # HUGGING_FACE_HUB_TOKEN:
 #   How to generate: https://huggingface.co/docs/hub/en/security-tokens
 #   Used to access "gated" models that require accepting terms and conditions.
-#   You need access to https://huggingface.co/google/gemma-3-12b-it
+#   You need access to https://huggingface.co/mistralai/Mistral-Small-24B-Instruct-2501
 # PROVIDERS_GOOGLE_CLIENT_SECRET:
 #   How to generate: https://github.com/thomseddon/traefik-forward-auth?tab=readme-ov-file#google
 #   Used to require authentication to access the observability services such as Grafana and Traefik.
