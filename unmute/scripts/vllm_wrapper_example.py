@@ -12,7 +12,7 @@ PREDEFINED_MESSAGE = "Explain the second law of thermodynamics"
 
 async def main(server_url: str):
     client = get_openai_client(server_url=server_url)
-    s = VLLMStream(client, temperature=1.0)
+    s = VLLMStream(client)
 
     messages = [
         {"role": "system", "content": "You are a helpful assistant."},

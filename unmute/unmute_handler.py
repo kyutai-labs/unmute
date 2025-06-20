@@ -215,7 +215,6 @@ class UnmuteHandler(AsyncStreamHandler):
         )
 
         messages = self.chatbot.preprocessed_messages()
-        print(messages)
 
         self.tts_output_stopwatch = Stopwatch(autostart=False)
         tts = None
