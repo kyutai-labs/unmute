@@ -1,3 +1,4 @@
+import os
 import asyncio
 import base64
 import json
@@ -81,6 +82,9 @@ ClientEventAdapter = TypeAdapter(
 
 # Allow CORS for local development
 CORS_ALLOW_ORIGINS = ["http://localhost", "http://localhost:3000"]
+if "HTTP_HOST" in os.environ:
+    CORS_ALLOW_ORIGINS.append(f'https://{os.environ["HTTP_HOST"]}:3000')
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
