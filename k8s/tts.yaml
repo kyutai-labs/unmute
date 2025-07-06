@@ -42,7 +42,12 @@ spec:
             limits:
               nvidia.com/gpu: 1
       nodeSelector:
-        accelerator: nvidia-tesla-gpu
+        nvidia.com/gpu.present: 'true'
+      tolerations:
+        - key: accelerator
+          operator: Equal
+          value: 'true'
+          effect: NoSchedule
       volumes:
         - name: cargo-registry-tts
           persistentVolumeClaim:
