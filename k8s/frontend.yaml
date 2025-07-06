@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/lukesmithxyz/unmute/unmute-frontend:latest
+          image: ghcr.io/uncensored-ai-inc/unmute-frontend:latest
           ports:
             - containerPort: 3000
           resources:

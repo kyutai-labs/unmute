@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ghcr.io/lukesmithxyz/unmute/unmute-backend:latest
+          image: ghcr.io/uncensored-ai-inc/unmute-backend:latest
           ports:
             - containerPort: 80
           env:
