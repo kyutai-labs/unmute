@@ -50,20 +50,15 @@ spec:
           effect: NoSchedule
       volumes:
         - name: cargo-registry-stt
-          persistentVolumeClaim:
-            claimName: cargo-registry-stt
+          emptyDir: {}
         - name: stt-target
-          persistentVolumeClaim:
-            claimName: stt-target
+          emptyDir: {}
         - name: uv-cache
-          persistentVolumeClaim:
-            claimName: uv-cache
+          emptyDir: {}
         - name: models
-          persistentVolumeClaim:
-            claimName: models
+          emptyDir: {}
         - name: stt-logs
-          persistentVolumeClaim:
-            claimName: stt-logs
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
