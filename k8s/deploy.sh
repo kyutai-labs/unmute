@@ -12,7 +12,18 @@ NC='\033[0m' # No Color
 # Set kubeconfig
 export KUBECONFIG=/home/lukes/nix-configs/machine-profiles/assets/.kube/config
 
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo -e "${GREEN}Starting Speech-IO Kubernetes deployment...${NC}"
+
+# Update image references to match the current repository
+echo -e "${GREEN}Updating image references...${NC}"
+if [ -f "$SCRIPT_DIR/update-images.sh" ]; then
+    "$SCRIPT_DIR/update-images.sh"
+else
+    echo -e "${YELLOW}Warning: update-images.sh not found, using existing image references.${NC}"
+fi
 
 # Check if kubectl is available
 if ! command -v kubectl &>/dev/null; then

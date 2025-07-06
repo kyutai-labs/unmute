@@ -10,6 +10,7 @@ This directory contains Kubernetes manifests for deploying the Speech-IO applica
 - kubectl configured to access your cluster
 - Ingress controller (e.g., nginx-ingress) for external access
 - Access to GitHub Container Registry (GHCR) images (automatically built via CI/CD)
+- Git repository with remote origin configured (for dynamic image naming)
 
 ## Architecture
 
@@ -20,7 +21,7 @@ The deployment consists of:
 - **Frontend**: React-based web interface
 - **Storage**: Longhorn persistent volumes for caches, models, and logs
 
-All Docker images are automatically built and pushed to GitHub Container Registry (GHCR) via GitHub Actions when code is pushed to the repository.
+All Docker images are automatically built and pushed to GitHub Container Registry (GHCR) via GitHub Actions when code is pushed to the repository. The image names are dynamically determined based on the repository owner, making this deployment work with any fork of the project.
 
 ## Quick Start
 
@@ -39,6 +40,8 @@ All Docker images are automatically built and pushed to GitHub Container Registr
    ```bash
    ./deploy.sh
    ```
+   
+   The deployment script automatically detects your repository owner and updates image references accordingly.
 
 3. **Access the application**:
    - Add `127.0.0.1 speech-io.local` to your `/etc/hosts` file
@@ -51,6 +54,9 @@ If you prefer to deploy manually:
 ```bash
 # Set your kubeconfig
 export KUBECONFIG=/home/lukes/nix-configs/machine-profiles/assets/.kube/config
+
+# Update image references for your repository
+./update-images.sh
 
 # Deploy in order
 kubectl apply -f namespace-and-storage.yaml
@@ -105,8 +111,9 @@ kubectl -n speech-io logs -f deployment/stt
 
 ### Image Pull Issues
 - Images are automatically built and pushed to GHCR via GitHub Actions
-- Ensure the latest images are available: `docker pull ghcr.io/lukesmithxyz/unmute/unmute-backend:latest`
+- Ensure the latest images are available: `docker pull ghcr.io/YOUR_USERNAME/unmute-backend:latest`
 - Check if images are public or if you need authentication to GHCR
+- Run `./update-images.sh` to ensure image names match your repository
 
 ### GPU Issues
 - Verify GPU operator is installed: `kubectl get nodes -o jsonpath='{.items[*].status.allocatable}' | grep nvidia.com/gpu`
@@ -127,8 +134,17 @@ kubectl -n speech-io logs -f deployment/stt
 
 ## Configuration
 
-### Using Custom Images
-If you want to use custom-built images instead of the GHCR ones, update the image references in the deployment files:
+### Dynamic Image Naming
+The deployment automatically detects your repository owner and updates image references. This works for any fork of the project.
+
+**Manual Image Updates:**
+```bash
+# Update all image references to match your repository
+./update-images.sh
+```
+
+**Using Custom Images:**
+If you want to use custom-built images instead of the GHCR ones, manually update the image references in the deployment files:
 
 ```yaml
 image: your-registry/unmute-backend:latest
