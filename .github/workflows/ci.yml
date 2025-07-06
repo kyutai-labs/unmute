@@ -7,20 +7,55 @@ on:
   pull_request:
 
 jobs:
-  # Enable again when we don't have private dependencies
-  #build-docker-images:
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - name: Checkout code
-  #      uses: actions/checkout@v3
-#
-  #    - name: Set up a builder (we don't want to load the images)
-  #      run: docker buildx create --name mybuilder --use
-#
-  #    - name: Build all docker images
-  #      run: docker buildx bake --progress=plain -f swarm-deploy.yml workers frontend tts
-  #      env:
-  #        DOMAIN: dummy
+  build-docker-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: hot-reloading
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/unmute-backend:latest
+            ghcr.io/${{ github.repository }}/unmute-backend:${{ github.sha }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/hot-reloading.Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/unmute-frontend:latest
+            ghcr.io/${{ github.repository }}/unmute-frontend:${{ github.sha }}
+
+      - name: Build and push moshi-server image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/moshi-server
+          file: ./services/moshi-server/public.Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/moshi-server:latest
+            ghcr.io/${{ github.repository }}/moshi-server:${{ github.sha }}
 
   pre-commit:
     runs-on: ubuntu-latest
@@ -31,7 +66,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.7.12"
+          version: '0.7.12'
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -60,7 +95,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.7.12"
+          version: '0.7.12'
 
       - name: Run backend unit tests
         run: uv run pytest -v

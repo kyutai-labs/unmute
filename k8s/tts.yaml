@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tts
+  namespace: speech-io
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tts
+  template:
+    metadata:
+      labels:
+        app: tts
+    spec:
+      containers:
+        - name: tts
+          image: ghcr.io/lukesmithxyz/unmute/moshi-server:latest
+          command: ['worker', '--config', 'configs/tts.toml']
+          ports:
+            - containerPort: 8080
+          env:
+            - name: HUGGING_FACE_HUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: huggingface-token
+                  key: token
+          volumeMounts:
+            - name: cargo-registry-tts
+              mountPath: /root/.cargo/registry
+            - name: tts-target
+              mountPath: /app/target
+            - name: uv-cache
+              mountPath: /root/.cache/uv
+            - name: models
+              mountPath: /models
+            - name: tts-logs
+              mountPath: /logs
+          resources:
+            requests:
+              nvidia.com/gpu: 1
+            limits:
+              nvidia.com/gpu: 1
+      nodeSelector:
+        accelerator: nvidia-tesla-gpu
+      volumes:
+        - name: cargo-registry-tts
+          persistentVolumeClaim:
+            claimName: cargo-registry-tts
+        - name: tts-target
+          persistentVolumeClaim:
+            claimName: tts-target
+        - name: uv-cache
+          persistentVolumeClaim:
+            claimName: uv-cache
+        - name: models
+          persistentVolumeClaim:
+            claimName: models
+        - name: tts-logs
+          persistentVolumeClaim:
+            claimName: tts-logs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tts
+  namespace: speech-io
+spec:
+  selector:
+    app: tts
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

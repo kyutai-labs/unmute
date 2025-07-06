@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: speech-io
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/lukesmithxyz/unmute/unmute-backend:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: KYUTAI_STT_URL
+              value: 'ws://stt:8080'
+            - name: KYUTAI_TTS_URL
+              value: 'ws://tts:8080'
+            - name: KYUTAI_LLM_URL
+              value: 'http://llm:8000'
+            - name: NEWSAPI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: newsapi-token
+                  key: token
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: speech-io
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
