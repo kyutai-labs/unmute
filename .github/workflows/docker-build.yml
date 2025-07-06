@@ -42,6 +42,12 @@ jobs:
             ghcr.io/${{ env.REPO_OWNER_LC }}/unmute-backend:latest
             ghcr.io/${{ env.REPO_OWNER_LC }}/unmute-backend:${{ github.sha }}
 
+      - name: Make backend package public
+        run: |
+          gh api /orgs/${{ github.repository_owner }}/packages/container/unmute-backend --method PATCH --field visibility=public || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-frontend:
     runs-on: ubuntu-latest
     permissions:
@@ -75,6 +81,12 @@ jobs:
             ghcr.io/${{ env.REPO_OWNER_LC }}/unmute-frontend:latest
             ghcr.io/${{ env.REPO_OWNER_LC }}/unmute-frontend:${{ github.sha }}
 
+      - name: Make frontend package public
+        run: |
+          gh api /orgs/${{ github.repository_owner }}/packages/container/unmute-frontend --method PATCH --field visibility=public || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-moshi-server:
     runs-on: ubuntu-latest
     permissions:
@@ -107,3 +119,9 @@ jobs:
           tags: |
             ghcr.io/${{ env.REPO_OWNER_LC }}/moshi-server:latest
             ghcr.io/${{ env.REPO_OWNER_LC }}/moshi-server:${{ github.sha }}
+
+      - name: Make moshi-server package public
+        run: |
+          gh api /orgs/${{ github.repository_owner }}/packages/container/moshi-server --method PATCH --field visibility=public || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
