@@ -50,15 +50,20 @@ spec:
           effect: NoSchedule
       volumes:
         - name: cargo-registry-tts
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 2Gi
         - name: tts-target
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 5Gi
         - name: uv-cache
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 3Gi
         - name: models
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 20Gi
         - name: tts-logs
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 1Gi
 ---
 apiVersion: v1
 kind: Service
