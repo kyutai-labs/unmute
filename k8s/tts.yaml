@@ -16,7 +16,7 @@ spec:
       containers:
         - name: tts
           image: ghcr.io/uncensored-ai-inc/moshi-server:latest
-          command: ['worker', '--config', 'configs/tts.toml']
+          args: ['worker', '--config', 'configs/tts.toml']
           ports:
             - containerPort: 8080
           env:

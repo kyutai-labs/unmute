@@ -42,23 +42,44 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: frontend-ingress
+  name: speech-io-ingress
   namespace: speech-io
+  labels:
+    app: speech-io
+    component: frontend
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Certificate management
+    cert-manager.io/issuer: 'prod-issuer'
+    cert-manager.io/issuer-kind: 'OriginIssuer'
+    cert-manager.io/issuer-group: 'cert-manager.k8s.cloudflare.com'
+    # NGINX configuration
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: '30'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '30'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '30'
+    nginx.ingress.kubernetes.io/proxy-buffer-size: '8k'
+    nginx.ingress.kubernetes.io/proxy-buffers-number: '8'
+    # Security headers
+    nginx.ingress.kubernetes.io/custom-http-errors: '404,503'
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit-connections: '20'
+    nginx.ingress.kubernetes.io/rate-limit-rps: '10'
+    # WebSocket support for real-time speech
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+    nginx.ingress.kubernetes.io/server-snippets: |
+      location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+      }
 spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - speech-io.staging.uncensored.ai
+      secretName: speech-io-staging-auto-tls
   rules:
-    - host: speech-io.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend
-                port:
-                  number: 3000
-    - host: speech-io.local
+    - host: speech-io.staging.uncensored.ai
       http:
         paths:
           - path: /api
@@ -68,3 +89,10 @@ spec:
                 name: backend
                 port:
                   number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000
