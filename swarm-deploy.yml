@@ -60,8 +60,6 @@ services:
     image: rg.fr-par.scw.cloud/namespace-unruffled-tereshkova/${DOMAIN}-frontend:latest
     build:
       context: frontend/
-    environment:
-      - NEXT_PUBLIC_IN_DOCKER=true
     deploy:
       # Having more than one replica is useful for scaling but also to avoid downtime
       # during crashes or updates. Traffic will be load balanced between replicas.

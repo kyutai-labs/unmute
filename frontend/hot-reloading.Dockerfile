@@ -21,6 +21,7 @@ ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
+ENV NEXT_PUBLIC_IN_DOCKER=true
 
 HEALTHCHECK --start-period=15s \
     CMD curl --fail http://localhost:3000/ || exit 1

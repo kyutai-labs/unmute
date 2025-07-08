@@ -10,12 +10,6 @@ export const useBackendServerUrl = () => {
 
       const prefix = isInDocker ? "/api" : "";
 
-      const url = new URL(prefix, window.location.href);
-      url.protocol = url.protocol === "http:" ? "ws" : "wss";
-      if (!isInDocker) {
-        url.port = "8000";
-      }
-
       const backendUrl = new URL("", window.location.href);
       if (!isInDocker) {
         backendUrl.port = "8000";

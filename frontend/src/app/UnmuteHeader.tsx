@@ -12,16 +12,25 @@ const frankRuhlLibre = Frank_Ruhl_Libre({
 const ShortExplanation = () => {
   return (
     <p className="text-xs text-right">
-      Speak to an AI using our new low-latency speech-to-text (
+      Speak to an AI using our new low-latency open-source{" "}
       <Link
         href="https://kyutai.org/next/stt"
         className="underline text-green"
         target="_blank"
         rel="noopener"
       >
-        open source
+        speech-to-text
+      </Link>{" "}
+      and{" "}
+      <Link
+        href="https://kyutai.org/next/tts"
+        className="underline text-green"
+        target="_blank"
+        rel="noopener"
+      >
+        text-to-speech
       </Link>
-      ) and text-to-speech (open source soon).
+      .
     </p>
   );
 };
@@ -54,6 +63,36 @@ const UnmuteHeader = () => {
             text-to-speech model to say it out loud.
           </p>
           <p>
+            All of the components are open-source:{" "}
+            <Link
+              href="https://kyutai.org/next/stt"
+              target="_blank"
+              rel="noopener"
+              className="underline text-green"
+            >
+              Kyutai STT
+            </Link>
+            ,{" "}
+            <Link
+              href="https://kyutai.org/next/tts"
+              target="_blank"
+              rel="noopener"
+              className="underline text-green"
+            >
+              Kyutai TTS
+            </Link>
+            , and{" "}
+            <Link
+              href="https://kyutai.org/next/unmute"
+              target="_blank"
+              rel="noopener"
+              className="underline text-green"
+            >
+              Unmute
+            </Link>{" "}
+            itself.
+          </p>
+          <p>
             Although cascaded systems lose valuable information like emotion,
             irony, etc., they provide unmatched modularity: since the three
             parts are separate, you can <em>Unmute</em> any LLM you want without
@@ -72,25 +111,12 @@ const UnmuteHeader = () => {
             intonation.
           </p>
           <p>
-            Kyutai STT is already open-source! Check out the{" "}
-            <Link
-              href="https://kyutai.org/next/stt"
-              target="_blank"
-              rel="noopener"
-              className="underline text-green"
-            >
-              project page
-            </Link>{" "}
-            to get started.
-          </p>
-          <p>
-            Soon, we&apos;ll open-source the TTS and the code of Unmute itself
-            as well. If you want to be notified when we do, follow us on{" "}
+            To stay up to date on our research, follow us on{" "}
             <Link
               href="https://twitter.com/kyutai_labs"
               target="_blank"
               rel="noopener"
-              className="underline"
+              className="underline text-green"
             >
               Twitter
             </Link>{" "}
@@ -99,18 +125,18 @@ const UnmuteHeader = () => {
               href="https://www.linkedin.com/company/kyutai-labs"
               target="_blank"
               rel="noopener"
-              className="underline"
+              className="underline text-green"
             >
               LinkedIn
             </Link>
             , or{" "}
             <Link
-              href="https://docs.google.com/forms/d/e/1FAIpQLSeu5GRxFOcgiAfAxFdn4LdyP6_s3jKEUNMNmaZxfH5-qdWCDQ/viewform?usp=header"
+              href="https://33d1df77.sibforms.com/serve/MUIFAICjnsdoIJLt57yBiJeUGA0emJ8eCBAvxtXRaAzxXfP7VYFXBgbDmcl8ig6BVt2qV4wnpRtCQaM0o3iPAJVA9UzQBSQKE3SacZULVUeAhIiI4RZiE0aigP_u_9cUK31SLrzsr1mf_Nw9sdzpz22rXBp_rnBVtd3YW1TSIhAag0F8biQaRg3mQJiCR5n0MXxA1KAzL0GO2wIu"
               target="_blank"
               rel="noopener"
               className="underline text-green"
             >
-              give us your email and we&apos;ll let you know
+              sign up for our newsletter
             </Link>
             .
           </p>
