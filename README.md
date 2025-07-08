@@ -33,7 +33,7 @@ graph LR
 
 Requirements:
 - Hardware: a GPU with CUDA support and at least 16 GB memory.
-- OS: Linux, or Windows with WSL. Running on Windows natively is not supported. Neither is running on Mac, see #74.
+- OS: Linux, or Windows with WSL ([installation instructions](https://ubuntu.com/desktop/wsl)). Running on Windows natively is not supported. Neither is running on Mac, see [#84](https://github.com/kyutai-labs/unmute/issues/84), [#74](https://github.com/kyutai-labs/unmute/issues/74).
 
 We provide multiple ways of deploying your own [unmute.sh](unmute.sh):
 
@@ -84,19 +84,6 @@ echo $HUGGING_FACE_HUB_TOKEN  # This should print hf_...something...
 
 docker compose up --build
 ```
-#### Running on Windows
-Running on Windows requires WSL (Windows Subsystem for Linux). You can find installation instructions [here](https://ubuntu.com/desktop/wsl).
-
-When running on Windows, you may encounter an error related to line endings in shell scripts. To fix this, you need to modify `services/moshi-server/public.Dockerfile`:
-
-1.  In the `RUN apt-get install -y ...` command, add `dos2unix` to the list of packages to install.
-
-2.  Add the following line before the `ENTRYPOINT` instruction to convert the script's line endings and make it executable:
-    ```dockerfile
-    RUN dos2unix ./start_moshi_server_public.sh && chmod +x ./start_moshi_server_public.sh
-    ```
-
-For more context, you can refer to [GitHub issue #84](https://github.com/kyutai-labs/unmute/issues/84).
 
 #### Using multiple GPUs
 
