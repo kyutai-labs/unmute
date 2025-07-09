@@ -1,5 +1,7 @@
 # Speech-IO Kubernetes Deployment
 
+<!-- Testing path exclusions - this change should not trigger Docker Build -->
+
 This directory contains Kubernetes manifests for deploying the Speech-IO application stack, including TTS (Text-to-Speech), STT (Speech-to-Text), backend, and frontend services.
 
 ## Prerequisites
