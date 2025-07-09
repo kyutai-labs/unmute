@@ -16,7 +16,7 @@ This directory contains Kubernetes manifests for deploying the Speech-IO applica
 
 The deployment consists of:
 - **TTS Service**: Moshi-based text-to-speech service (requires GPU)
-- **STT Service**: Moshi-based speech-to-text service (requires GPU)  
+- **STT Service**: Moshi-based speech-to-text service (requires GPU)
 - **Backend**: API backend service that orchestrates TTS/STT
 - **Frontend**: React-based web interface
 - **Storage**: Longhorn persistent volumes for caches, models, and logs
@@ -30,7 +30,7 @@ All Docker images are automatically built and pushed to GitHub Container Registr
    # HuggingFace token for model downloads
    kubectl -n speech-io create secret generic huggingface-token \
      --from-literal=token=YOUR_HUGGINGFACE_TOKEN
-   
+
    # NewsAPI token for backend
    kubectl -n speech-io create secret generic newsapi-token \
      --from-literal=token=YOUR_NEWSAPI_TOKEN
@@ -40,7 +40,7 @@ All Docker images are automatically built and pushed to GitHub Container Registr
    ```bash
    ./deploy.sh
    ```
-   
+
    The deployment script automatically detects your repository owner and updates image references accordingly.
 
 3. **Access the application**:
@@ -101,7 +101,7 @@ Both TTS and STT services require NVIDIA GPUs:
 Check deployment status:
 ```bash
 kubectl -n speech-io get pods
-kubectl -n speech-io get services  
+kubectl -n speech-io get services
 kubectl -n speech-io get pvc
 kubectl -n speech-io logs -f deployment/tts
 kubectl -n speech-io logs -f deployment/stt
@@ -119,7 +119,7 @@ kubectl -n speech-io logs -f deployment/stt
 - Verify GPU operator is installed: `kubectl get nodes -o jsonpath='{.items[*].status.allocatable}' | grep nvidia.com/gpu`
 - Check node labels: `kubectl get nodes --show-labels | grep nvidia`
 
-### Storage Issues  
+### Storage Issues
 - Verify Longhorn is running: `kubectl -n longhorn-system get pods`
 - Check storage class: `kubectl get storageclass longhorn`
 
