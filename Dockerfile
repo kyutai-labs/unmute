@@ -1,4 +1,8 @@
 FROM ghcr.io/astral-sh/uv:0.6.17-debian AS build
+
+# Install ffmpeg for audio processing
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 ENV UV_COMPILE_BYTECODE=1 UV_LOCKED=1

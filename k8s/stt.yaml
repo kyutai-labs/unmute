@@ -25,14 +25,24 @@ spec:
                 secretKeyRef:
                   name: huggingface-token
                   key: token
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: 'all'
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: 'compute,utility'
+            - name: PATH
+              value: '/root/.cargo/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+            - name: LD_LIBRARY_PATH
+              value: '/usr/local/cuda/lib64:/usr/local/cuda/lib'
+            - name: CUDA_HOME
+              value: '/usr/local/cuda'
           volumeMounts:
-            - name: cargo-registry-stt
+            - name: shared-cargo-registry
               mountPath: /root/.cargo/registry
             - name: stt-target
               mountPath: /app/target
-            - name: uv-cache
+            - name: shared-uv-cache
               mountPath: /root/.cache/uv
-            - name: models
+            - name: shared-models
               mountPath: /models
             - name: stt-logs
               mountPath: /logs
@@ -44,23 +54,23 @@ spec:
       nodeSelector:
         nvidia.com/gpu.present: 'true'
       tolerations:
-        - key: accelerator
+        - key: nvidia.com/gpu
           operator: Equal
           value: 'true'
           effect: NoSchedule
       volumes:
-        - name: cargo-registry-stt
-          emptyDir:
-            sizeLimit: 2Gi
-        - name: stt-target
+        - name: shared-cargo-registry
           emptyDir:
             sizeLimit: 5Gi
-        - name: uv-cache
+        - name: stt-target
           emptyDir:
-            sizeLimit: 3Gi
-        - name: models
+            sizeLimit: 10Gi
+        - name: shared-uv-cache
           emptyDir:
-            sizeLimit: 20Gi
+            sizeLimit: 10Gi
+        - name: shared-models
+          emptyDir:
+            sizeLimit: 5Gi
         - name: stt-logs
           emptyDir:
             sizeLimit: 1Gi

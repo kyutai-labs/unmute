@@ -24,7 +24,7 @@ spec:
             - name: KYUTAI_TTS_URL
               value: 'ws://tts:8080'
             - name: KYUTAI_LLM_URL
-              value: 'http://llm:8000'
+              value: 'http://llm-d-inference-gateway-istio.llm-d:80'
             - name: NEWSAPI_API_KEY
               valueFrom:
                 secretKeyRef:

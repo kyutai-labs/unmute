@@ -1,0 +1,204 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: speech-io-auto-deploy-sa
+  namespace: speech-io
+  labels:
+    app: speech-io
+    component: auto-deploy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: speech-io-auto-deploy-role
+  namespace: speech-io
+  labels:
+    app: speech-io
+    component: auto-deploy
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: speech-io-auto-deploy-binding
+  namespace: speech-io
+  labels:
+    app: speech-io
+    component: auto-deploy
+subjects:
+  - kind: ServiceAccount
+    name: speech-io-auto-deploy-sa
+    namespace: speech-io
+roleRef:
+  kind: Role
+  name: speech-io-auto-deploy-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: speech-io-auto-deploy
+  namespace: speech-io
+  labels:
+    app: speech-io
+    component: auto-deploy
+spec:
+  # Run every 5 minutes with randomness
+  schedule: "*/5 * * * *"
+
+  # Keep last 3 successful and 1 failed job
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+
+  # Don't run if previous job is still running
+  concurrencyPolicy: Forbid
+
+  # Start deadline in case of missed schedule
+  startingDeadlineSeconds: 300
+
+  jobTemplate:
+    spec:
+      # Clean up completed jobs after 1 hour
+      ttlSecondsAfterFinished: 3600
+
+      template:
+        metadata:
+          labels:
+            app: speech-io
+            component: auto-deploy
+        spec:
+          serviceAccountName: speech-io-auto-deploy-sa
+          restartPolicy: OnFailure
+
+          containers:
+            - name: auto-deploy
+              image: bitnami/kubectl:latest
+              imagePullPolicy: Always
+
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -e
+
+                  # Add randomness - sleep 0-59 seconds to avoid all jobs running at same time
+                  RANDOM_DELAY=$((RANDOM % 60))
+                  echo "Sleeping ${RANDOM_DELAY} seconds for randomness..."
+                  sleep $RANDOM_DELAY
+
+                  echo "Starting speech-io auto-deploy check at $(date)"
+
+                  NAMESPACE="speech-io"
+
+                  # Define deployments and their expected images
+                  declare -A DEPLOYMENTS=(
+                    ["backend"]="ghcr.io/uncensored-ai-inc/unmute-backend:latest"
+                    ["frontend"]="ghcr.io/uncensored-ai-inc/unmute-frontend:latest"
+                    ["stt"]="ghcr.io/uncensored-ai-inc/unmute-stt:latest"
+                    ["tts"]="ghcr.io/uncensored-ai-inc/unmute-tts:latest"
+                  )
+
+                  check_and_update_deployment() {
+                    local DEPLOYMENT_NAME=$1
+                    local EXPECTED_IMAGE=$2
+
+                    echo "Checking deployment: $DEPLOYMENT_NAME"
+
+                    # Check if deployment exists
+                    if ! kubectl get deployment $DEPLOYMENT_NAME -n $NAMESPACE >/dev/null 2>&1; then
+                      echo "Deployment $DEPLOYMENT_NAME not found - skipping"
+                      return
+                    fi
+
+                    # Get current image from deployment
+                    CURRENT_IMAGE=$(kubectl get deployment $DEPLOYMENT_NAME -n $NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}')
+                    echo "Current image: $CURRENT_IMAGE"
+                    echo "Expected image: $EXPECTED_IMAGE"
+
+                    # If using latest tag, check if image digest has actually changed
+                    if [[ "$CURRENT_IMAGE" == *":latest" ]]; then
+                      echo "Using latest tag - checking for image changes..."
+
+                      # Get current image digest from running pod
+                      CURRENT_POD=$(kubectl get pods -n $NAMESPACE -l app=$DEPLOYMENT_NAME -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+                      if [[ -n "$CURRENT_POD" ]]; then
+                        CURRENT_DIGEST=$(kubectl get pod $CURRENT_POD -n $NAMESPACE -o jsonpath='{.status.containerStatuses[0].imageID}' 2>/dev/null || echo "")
+                        echo "Current image digest: $CURRENT_DIGEST"
+
+                        # Create a temporary pod to check latest image digest
+                        TEMP_POD_NAME="image-check-$DEPLOYMENT_NAME-$(date +%s)"
+                        kubectl run $TEMP_POD_NAME -n $NAMESPACE --image=$EXPECTED_IMAGE --restart=Never --rm -i --quiet -- sleep 5 &
+                        TEMP_PID=$!
+
+                        # Wait for pod to be created and get image digest
+                        sleep 15
+                        LATEST_DIGEST=$(kubectl get pod $TEMP_POD_NAME -n $NAMESPACE -o jsonpath='{.status.containerStatuses[0].imageID}' 2>/dev/null || echo "")
+
+                        # Clean up temp pod
+                        kubectl delete pod $TEMP_POD_NAME -n $NAMESPACE --ignore-not-found=true
+                        wait $TEMP_PID 2>/dev/null || true
+
+                        echo "Latest image digest: $LATEST_DIGEST"
+
+                        # Compare digests - only restart if different
+                        if [[ -n "$LATEST_DIGEST" && -n "$CURRENT_DIGEST" && "$CURRENT_DIGEST" != "$LATEST_DIGEST" ]]; then
+                          echo "Image digest changed for $DEPLOYMENT_NAME - triggering rolling restart"
+                          kubectl rollout restart deployment/$DEPLOYMENT_NAME -n $NAMESPACE
+
+                          # Wait for rollout to complete
+                          kubectl rollout status deployment/$DEPLOYMENT_NAME -n $NAMESPACE --timeout=300s
+
+                          echo "Rolling restart completed successfully for $DEPLOYMENT_NAME"
+                        else
+                          echo "No image changes detected for $DEPLOYMENT_NAME - skipping restart"
+                        fi
+                      else
+                        echo "No running pods found for $DEPLOYMENT_NAME - skipping image check"
+                      fi
+                    else
+                      echo "Not using latest tag for $DEPLOYMENT_NAME - no action needed"
+                    fi
+                  }
+
+                  # Check each deployment
+                  for DEPLOYMENT in "${!DEPLOYMENTS[@]}"; do
+                    check_and_update_deployment "$DEPLOYMENT" "${DEPLOYMENTS[$DEPLOYMENT]}"
+                    echo "---"
+                  done
+
+                  echo "Speech-io auto-deploy check completed at $(date)"
+
+              env:
+                - name: KUBECONFIG
+                  value: "/tmp/kubeconfig"
+
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1001
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+
+              volumeMounts:
+                - name: tmp-volume
+                  mountPath: /tmp
+
+          volumes:
+            - name: tmp-volume
+              emptyDir: {}
