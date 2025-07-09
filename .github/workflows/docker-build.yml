@@ -5,7 +5,17 @@ on:
     branches:
       - prod
       - main
+    paths-ignore:
+      - '.github/**'
+      - 'k8s/**'
+      - '*.md'
+      - 'docs/**'
   pull_request:
+    paths-ignore:
+      - '.github/**'
+      - 'k8s/**'
+      - '*.md'
+      - 'docs/**'
 
 jobs:
   build-backend:
