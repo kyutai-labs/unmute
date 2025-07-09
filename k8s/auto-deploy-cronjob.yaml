@@ -16,12 +16,12 @@ metadata:
     app: speech-io
     component: auto-deploy
 rules:
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["get", "list", "patch"]
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "delete", "create"]
+  - apiGroups: ['apps']
+    resources: ['deployments']
+    verbs: ['get', 'list', 'patch']
+  - apiGroups: ['']
+    resources: ['pods']
+    verbs: ['get', 'list', 'delete', 'create', 'watch']
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -50,7 +50,7 @@ metadata:
     component: auto-deploy
 spec:
   # Run every 5 minutes with randomness
-  schedule: "*/5 * * * *"
+  schedule: '*/5 * * * *'
 
   # Keep last 3 successful and 1 failed job
   successfulJobsHistoryLimit: 3
@@ -100,8 +100,8 @@ spec:
                   declare -A DEPLOYMENTS=(
                     ["backend"]="ghcr.io/uncensored-ai-inc/unmute-backend:latest"
                     ["frontend"]="ghcr.io/uncensored-ai-inc/unmute-frontend:latest"
-                    ["stt"]="ghcr.io/uncensored-ai-inc/unmute-stt:latest"
-                    ["tts"]="ghcr.io/uncensored-ai-inc/unmute-tts:latest"
+                    ["stt"]="ghcr.io/uncensored-ai-inc/moshi-server:latest"
+                    ["tts"]="ghcr.io/uncensored-ai-inc/moshi-server:latest"
                   )
 
                   check_and_update_deployment() {
@@ -176,7 +176,7 @@ spec:
 
               env:
                 - name: KUBECONFIG
-                  value: "/tmp/kubeconfig"
+                  value: '/tmp/kubeconfig'
 
               resources:
                 requests:
