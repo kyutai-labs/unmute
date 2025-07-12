@@ -1,0 +1,103 @@
+# See NOTE comments for places to modify.
+services:
+  traefik:
+    image: traefik:v3.3.1
+    command:
+      # Swarm provider configuration
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+
+      # This is set up for HTTP. If you want HTTPS support for production, use Docker Swarm
+      # (check out swarm-deploy.yml) or ask ChatGPT to modify this file for you.
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  frontend:
+    image: unmute-frontend:latest
+    build:
+      context: frontend/
+      dockerfile: hot-reloading.Dockerfile
+    volumes:
+      - ./frontend/src:/app/src
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.frontend.priority=10" # lowest priority
+
+  backend:
+    image: unmute-backend:latest
+    build:
+      context: ./
+      target: hot-reloading
+    volumes:
+      - ./unmute:/app/unmute
+    environment:
+      - KYUTAI_STT_URL=ws://stt:8080
+      - KYUTAI_TTS_URL=ws://tts:8080
+      - KYUTAI_LLM_URL=http://host.docker.internal:11434
+      - KYUTAI_LLM_MODEL=gemma3
+      - KYUTAI_LLM_API_KEY=ollama
+      - NEWSAPI_API_KEY=$NEWSAPI_API_KEY
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.middlewares=strip-api"
+      - "traefik.http.middlewares.strip-api.replacepathregex.regex=^/api/(.*)"
+      - "traefik.http.middlewares.strip-api.replacepathregex.replacement=/$$1"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.services.backend.loadbalancer.server.port=80"
+      - "traefik.http.routers.backend.priority=100" # higher priority than frontend
+      - "prometheus-port=80"
+
+  tts:
+    image: moshi-server:latest
+    command: ["worker", "--config", "configs/tts.toml"]
+    build:
+      context: services/moshi-server
+      dockerfile: public.Dockerfile
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
+    volumes:
+      - ./volumes/cargo-registry-tts:/root/.cargo/registry
+      - ./volumes/tts-target:/app/target
+      - ./volumes/uv-cache:/root/.cache/uv
+      - /tmp/models/:/models
+      - ./volumes/tts-logs:/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  stt:
+    image: moshi-server:latest
+    command: ["worker", "--config", "configs/stt.toml"]
+    build:
+      context: services/moshi-server
+      dockerfile: public.Dockerfile
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
+    volumes:
+      - ./volumes/cargo-registry-stt:/root/.cargo/registry
+      - ./volumes/stt-target:/app/target
+      - ./volumes/uv-cache:/root/.cache/uv
+      - /tmp/models/:/models
+      - ./volumes/stt-logs:/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+networks:
+  default:
