@@ -4,6 +4,7 @@ FROM nvidia/cuda:12.1.0-devel-ubuntu22.04 AS base
 # Set environment variables to avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install dependencies, including dos2unix to handle Windows line endings
 RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
@@ -14,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     cmake \
     wget \
     openssh-client \
+    dos2unix \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
@@ -37,5 +39,10 @@ RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/a40c5612ade3496f4e4
 RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/a40c5612ade3496f4e4aa47273964404ba287168/rust/moshi-server/uv.lock
 
 COPY . .
+
+# Ensure the startup script is runnable inside the container.
+# This prevents script errors that can happen if the project was cloned on Windows,
+# which uses a different text file format (CRLF) than the Linux environment in the container (LF).
+RUN dos2unix ./start_moshi_server_public.sh && chmod +x ./start_moshi_server_public.sh
 
 ENTRYPOINT ["uv", "run", "--locked", "--project", "./moshi-server", "./start_moshi_server_public.sh"]

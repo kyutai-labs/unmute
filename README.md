@@ -33,7 +33,7 @@ graph LR
 
 Requirements:
 - Hardware: a GPU with CUDA support and at least 16 GB memory.
-- OS: Linux, or Windows with WSL. Running on Windows natively is not supported. Neither is running on Mac, see #74.
+- OS: Linux, or Windows with WSL ([installation instructions](https://ubuntu.com/desktop/wsl)). Running on Windows natively is not supported (see [#84](https://github.com/kyutai-labs/unmute/issues/84)). Neither is running on Mac (see [#74](https://github.com/kyutai-labs/unmute/issues/74)).
 
 We provide multiple ways of deploying your own [unmute.sh](unmute.sh):
 
@@ -104,6 +104,7 @@ If you have at least three GPUs available, add this snippet to the `stt`, `tts` 
               count: 1
               capabilities: [gpu]
 ```
+
 
 ### Running without Docker
 
