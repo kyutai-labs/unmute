@@ -1,5 +1,5 @@
 # This is the public-facing version.
-FROM nvidia/cuda:12.1.0-devel-ubuntu22.04 AS base
+FROM nvidia/cuda:12.9.1-devel-ubuntu22.04 AS base
 
 # Set environment variables to avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH="/root/.cargo/bin:$PATH"
 
-COPY --from=ghcr.io/astral-sh/uv:0.7.2 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.8.3 /uv /uvx /bin/
 
 WORKDIR /app
 
@@ -35,8 +35,8 @@ HEALTHCHECK --start-period=10m \
 EXPOSE 8080
 ENV RUST_BACKTRACE=1
 
-RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/a40c5612ade3496f4e4aa47273964404ba287168/rust/moshi-server/pyproject.toml
-RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/a40c5612ade3496f4e4aa47273964404ba287168/rust/moshi-server/uv.lock
+RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/bf359af7694add34c13e65d2f009f0cb474d87cc/rust/moshi-server/pyproject.toml
+RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/bf359af7694add34c13e65d2f009f0cb474d87cc/rust/moshi-server/uv.lock
 
 COPY . .
 
