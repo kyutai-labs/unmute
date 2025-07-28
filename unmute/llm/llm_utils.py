@@ -9,7 +9,7 @@ from openai import AsyncOpenAI, OpenAI
 
 from unmute.kyutai_constants import LLM_SERVER
 
-from ..kyutai_constants import KYUTAI_LLM_MODEL, KYUTAI_LLM_API_KEY
+from ..kyutai_constants import KYUTAI_LLM_API_KEY, KYUTAI_LLM_MODEL
 
 INTERRUPTION_CHAR = "—"  # em-dash
 USER_SILENCE_MARKER = "..."
@@ -117,7 +117,9 @@ class MistralStream:
             yield delta
 
 
-def get_openai_client(server_url: str = LLM_SERVER, api_key: str = KYUTAI_LLM_API_KEY) -> AsyncOpenAI:
+def get_openai_client(
+    server_url: str = LLM_SERVER, api_key: str = KYUTAI_LLM_API_KEY
+) -> AsyncOpenAI:
     return AsyncOpenAI(api_key=api_key, base_url=server_url + "/v1")
 
 
@@ -125,7 +127,8 @@ def get_openai_client(server_url: str = LLM_SERVER, api_key: str = KYUTAI_LLM_AP
 def autoselect_model() -> str:
     if KYUTAI_LLM_MODEL is not None:
         return KYUTAI_LLM_MODEL
-    client_sync = OpenAI(api_key=get_openai_client().api_key, base_url=get_openai_client().base_url)
+    openai_client = get_openai_client()
+    client_sync = OpenAI(api_key=openai_client.api_key, base_url=openai_client.base_url)
     models = client_sync.models.list()
     if len(models.data) != 1:
         raise ValueError("There are multiple models available. Please specify one.")
