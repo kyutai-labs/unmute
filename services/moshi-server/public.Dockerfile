@@ -1,5 +1,5 @@
 # This is the public-facing version.
-FROM nvidia/cuda:12.9.1-devel-ubuntu22.04 AS base
+FROM nvidia/cuda:12.8.1-devel-ubuntu22.04 AS base
 
 # Set environment variables to avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH="/root/.cargo/bin:$PATH"
 
-COPY --from=ghcr.io/astral-sh/uv:0.8.3 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.7.2 /uv /uvx /bin/
 
 WORKDIR /app
 
