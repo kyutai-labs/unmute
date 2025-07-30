@@ -11,7 +11,12 @@ export const useMicrophoneAccess = () => {
   const askMicrophoneAccess = useCallback(async () => {
     try {
       mediaStream.current = await window.navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          autoGainControl: true,
+          noiseSuppression: true,
+        }
       });
       setMicrophoneAccess("granted");
       return mediaStream.current;
