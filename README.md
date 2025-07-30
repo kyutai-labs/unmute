@@ -240,7 +240,7 @@ This points to your localhost server. Alternatively, for OpenAI, you can use
     [..]
     environment:
       [..]
-      - KYUTAI_LLM_URL=https://api.openai.com/v1/models/gpt4o-mini
+      - KYUTAI_LLM_URL=https://api.openai.com/v1
       - KYUTAI_LLM_MODEL=gpt-4.1
       - KYUTAI_LLM_API_KEY=sk-..
 ```
