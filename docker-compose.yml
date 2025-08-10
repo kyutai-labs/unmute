@@ -61,6 +61,7 @@ services:
     environment:
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
     volumes:
+      - ./volumes/hf-cache:/root/.cache/huggingface
       - ./volumes/cargo-registry-tts:/root/.cargo/registry
       - ./volumes/tts-target:/app/target
       - ./volumes/uv-cache:/root/.cache/uv
@@ -83,6 +84,7 @@ services:
     environment:
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
     volumes:
+      - ./volumes/hf-cache:/root/.cache/huggingface
       - ./volumes/cargo-registry-stt:/root/.cargo/registry
       - ./volumes/stt-target:/app/target
       - ./volumes/uv-cache:/root/.cache/uv
@@ -112,7 +114,7 @@ services:
         "--gpu-memory-utilization=0.4",
       ]
     volumes:
-      - ./volumes/huggingface-cache:/root/.cache/huggingface"
+      - ./volumes/hf-cache:/root/.cache/huggingface
       - ./volumes/vllm-cache:/root/.cache/vllm
     environment:
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
