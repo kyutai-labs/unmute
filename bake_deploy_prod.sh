@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e # Exit on error
 
 uv run unmute/scripts/check_hugging_face_token_not_write.py $HUGGING_FACE_HUB_TOKEN
 
@@ -15,6 +15,8 @@ if [[ -n $(git status --porcelain) ]]; then
   echo "❌ You have uncommitted changes. Please commit or stash them before deploying."
   exit 1
 fi
+
+set -x # Print commands
 
 export DOMAIN=unmute.sh
 # Note that using non-Mistral models also requires changing the vLLM args in ./swarm-deploy.yml

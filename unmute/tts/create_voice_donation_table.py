@@ -82,7 +82,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--set-mtime",
         action="store_true",
-        help="Set modification time of each file to match its timestamp.",
+        help="Set modification time of each file to match its timestamp. "
+        "Useful to be able to sort the folder by timestamp for manual verification, "
+        "so that the file order matches the table.",
     )
     args = parser.parse_args()
 

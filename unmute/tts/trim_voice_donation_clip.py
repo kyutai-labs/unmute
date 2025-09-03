@@ -69,13 +69,17 @@ def trim_trailing_silence(in_path: Path, out_path: Path | None = None) -> None:
         raise ValueError(f"Unexpected audio shape: {data.shape}")
 
     n_samples = data.shape[0]
-    data = trim_silence_end(data)
 
     ten_sec_samples = int(SAMPLE_RATE * 10)
     if n_samples < ten_sec_samples:
-        raise ValueError(
-            f"Input shorter than 10 seconds: {n_samples / SAMPLE_RATE:.2f}s"
+        print(
+            f"{in_path} is shorter than 10 seconds: "
+            f"{n_samples / SAMPLE_RATE:.2f}s, not trimming"
         )
+        sphn.write_wav(out_path, data, SAMPLE_RATE)
+        return
+
+    data = trim_silence_end(data)
 
     data_last10 = data[-ten_sec_samples:]
     if data_last10.shape[0] < ten_sec_samples:
