@@ -22,7 +22,7 @@ export CXXFLAGS="-include cstdint"
 
 # If you already have moshi-server installed and things are not working because of the LD_LIBRARY_PATH issue,
 # you might have to force a rebuild with --force.
-cargo install --features cuda moshi-server@0.6.3
+cargo install --features cuda moshi-server@0.6.4
 
 # If you're getting `moshi-server: error: unrecognized arguments: worker`, it means you're
 # using the binary from the `moshi` Python package rather than from the Rust package.
