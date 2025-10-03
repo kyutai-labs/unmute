@@ -163,7 +163,7 @@ services:
         - "traefik.http.routers.tts.tls=true"
         - "traefik.http.routers.tts.tls.certresolver=letsencrypt_resolver"
         - "traefik.http.services.tts.loadbalancer.server.port=8080"
-        - "traefik.http.routers.tts.priority=120"
+        - "traefik.http.routers.tts.priority=100"
       replicas: 3
       update_config:
         delay: 60s # it takes a very long time to boot up and we want no downtime
@@ -206,7 +206,7 @@ services:
         - "traefik.http.routers.stt.tls=true"
         - "traefik.http.routers.stt.tls.certresolver=letsencrypt_resolver"
         - "traefik.http.services.stt.loadbalancer.server.port=8080"
-        - "traefik.http.routers.stt.priority=110"
+        - "traefik.http.routers.stt.priority=100"
       replicas: 1
       resources:
         limits:
@@ -248,9 +248,6 @@ services:
         "--model=${KYUTAI_LLM_MODEL}",
         "--max-model-len=8192",
         "--dtype=bfloat16",
-        # "--tokenizer_mode=mistral",  # You can remove those args if you're not using mistral
-        # "--config_format=mistral",
-        # "--load-format=mistral",
       ]
     healthcheck:
       # The very first time it can be VERY slow, because of the download
@@ -269,6 +266,17 @@ services:
     deploy:
       labels:
         - "prometheus-port=8000"
+        # Expose the LLM service via Traefik under the /llm-server path
+        - "traefik.enable=true"
+        - "traefik.http.routers.llm.rule=(Host(`www.${DOMAIN}`) || Host(`${DOMAIN}`)) && PathPrefix(`/llm-server`)"
+        - "traefik.http.routers.llm.middlewares=strip-llm"
+        - "traefik.http.middlewares.strip-llm.replacepathregex.regex=^/llm-server/(.*)"
+        - "traefik.http.middlewares.strip-llm.replacepathregex.replacement=/$$1"
+        - "traefik.http.routers.llm.entrypoints=websecure"
+        - "traefik.http.routers.llm.tls=true"
+        - "traefik.http.routers.llm.tls.certresolver=letsencrypt_resolver"
+        - "traefik.http.services.llm.loadbalancer.server.port=8000"
+        - "traefik.http.routers.llm.priority=100"
       # 4 containers are used, one gpu per container, and the requests end up being load balanced
       # between them. There is no "smart" routing but it's enough for our use case.
       replicas: 4
