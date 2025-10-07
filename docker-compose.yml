@@ -61,7 +61,6 @@ services:
     environment:
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
     volumes:
-      - ./volumes/hf-cache:/root/.cache/huggingface
       - ./volumes/cargo-registry-tts:/root/.cargo/registry
       - ./volumes/tts-target:/app/target
       - ./volumes/uv-cache:/root/.cache/uv
@@ -84,7 +83,6 @@ services:
     environment:
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
     volumes:
-      - ./volumes/hf-cache:/root/.cache/huggingface
       - ./volumes/cargo-registry-stt:/root/.cargo/registry
       - ./volumes/stt-target:/app/target
       - ./volumes/uv-cache:/root/.cache/uv
@@ -99,7 +97,7 @@ services:
               capabilities: [gpu]
 
   llm:
-    image: vllm/vllm-openai:v0.9.1
+    image: vllm/vllm-openai:v0.10.0
     command:
       [
         # NOTE: Change the LLM here if you want.
@@ -107,14 +105,14 @@ services:
         "--model=meta-llama/Llama-3.2-1B-Instruct",
         # NOTE: You can adapt this based on your GPU memory.
         # A higher value takes more memory but supports longer conversations.
-        "--max-model-len=1536",
+        # "--max-model-len=1536",
         "--dtype=bfloat16",
         # NOTE: Change this based on your GPU memory.
         # A higher value can make inference faster.
         "--gpu-memory-utilization=0.4",
       ]
     volumes:
-      - ./volumes/hf-cache:/root/.cache/huggingface
+      - ./volumes/huggingface-cache:/root/.cache/huggingface"
       - ./volumes/vllm-cache:/root/.cache/vllm
     environment:
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
