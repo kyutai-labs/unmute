@@ -248,6 +248,10 @@ services:
         "--model=${KYUTAI_LLM_MODEL}",
         "--max-model-len=8192",
         "--dtype=bfloat16",
+        "--tensor-parallel-size=2",  # Needed to run models that don't fit on a single GPU
+        "--tokenizer_mode=mistral",  # You can remove those args if you're not using mistral
+        "--config_format=mistral",
+        "--load-format=mistral",
       ]
     healthcheck:
       # The very first time it can be VERY slow, because of the download
