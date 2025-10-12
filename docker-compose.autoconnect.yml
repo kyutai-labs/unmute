@@ -8,7 +8,6 @@ services:
     build:
       context: ./
       target: autoconnect  # Use autoconnect target
-    command: ["python", "-m", "unmute.main_auto_connect"]
     environment:
       - KYUTAI_STT_URL=ws://stt:8080
       - KYUTAI_TTS_URL=ws://tts:8080

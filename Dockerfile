@@ -19,7 +19,10 @@ CMD ["uv", "run", "--no-dev", "uvicorn", "unmute.main_websocket:app", "--host", 
 
 FROM build AS autoconnect
 # Production target for auto-connect backend
-CMD ["uv", "run", "--no-dev", "python", "-m", "unmute.main_auto_connect"]
+ENV HOSTNAME="0.0.0.0"
+HEALTHCHECK --start-period=15s \
+    CMD curl --fail http://localhost:8000/v1/health || exit 1
+CMD ["uv", "run", "--no-dev", "-m", "unmute.main_auto_connect"]
 
 FROM build AS hot-reloading
 # Development target with hot reloading
