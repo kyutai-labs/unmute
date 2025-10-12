@@ -13,11 +13,14 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --start-period=15s \
     CMD curl --fail http://localhost:80/metrics || exit 1
 
-FROM build AS prod
-# Running through uvicorn directly to be able to deactive the Websocket per message deflate which is slowing
-# down the replies by a few ms.
+FROM build AS production
+# Production target for regular websocket server
 CMD ["uv", "run", "--no-dev", "uvicorn", "unmute.main_websocket:app", "--host", "0.0.0.0", "--port", "80", "--ws-per-message-deflate=false"]
 
+FROM build AS autoconnect
+# Production target for auto-connect backend
+CMD ["uv", "run", "--no-dev", "python", "-m", "unmute.main_auto_connect"]
 
 FROM build AS hot-reloading
+# Development target with hot reloading
 CMD ["uv", "run", "--no-dev", "uvicorn", "unmute.main_websocket:app", "--reload", "--host", "0.0.0.0", "--port", "80", "--ws-per-message-deflate=false"]

@@ -1,0 +1,146 @@
+# Docker Compose configuration for Unmute Auto-Connect Backend
+# This version automatically connects to remote devices instead of waiting for client connections
+
+services:
+  # Auto-connect backend that initiates connections to remote devices
+  backend-autoconnect:
+    image: unmute-backend:latest
+    build:
+      context: ./
+      target: autoconnect  # Use autoconnect target
+    command: ["python", "-m", "unmute.main_auto_connect"]
+    environment:
+      - KYUTAI_STT_URL=ws://stt:8080
+      - KYUTAI_TTS_URL=ws://tts:8080
+      - KYUTAI_LLM_URL=http://llm:8000
+      - NEWSAPI_API_KEY=${NEWSAPI_API_KEY}
+      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
+      - REMOTE_DEVICES_CONFIG=/app/devices.json
+      - HOST=0.0.0.0
+      - PORT=8000
+      - LOG_LEVEL=info
+    volumes:
+      # Mount device configuration file
+      - ./devices.json:/app/devices.json:ro
+      # Mount logs directory (optional)
+      - ./volumes/backend-logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      - stt
+      - tts
+      - llm
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Speech-to-Text service
+  stt:
+    image: moshi-server:latest
+    command: ["worker", "--config", "configs/stt.toml"]
+    build:
+      context: services/moshi-server
+      dockerfile: public.Dockerfile
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
+    volumes:
+      - ./volumes/hf-cache:/root/.cache/huggingface
+      - ./volumes/cargo-registry-stt:/root/.cargo/registry
+      - ./volumes/stt-target:/app/target
+      - ./volumes/uv-cache:/root/.cache/uv
+      - /tmp/models/:/models
+      - ./volumes/stt-logs:/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # Text-to-Speech service
+  tts:
+    image: moshi-server:latest
+    command: ["worker", "--config", "configs/tts.toml"]
+    build:
+      context: services/moshi-server
+      dockerfile: public.Dockerfile
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
+    volumes:
+      - ./volumes/hf-cache:/root/.cache/huggingface
+      - ./volumes/cargo-registry-tts:/root/.cargo/registry
+      - ./volumes/tts-target:/app/target
+      - ./volumes/uv-cache:/root/.cache/uv
+      - /tmp/models/:/models
+      - ./volumes/tts-logs:/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # Large Language Model service
+  llm:
+    image: vllm/vllm-openai:v0.9.1
+    command:
+      [
+        "--model=meta-llama/Llama-3.2-1B-Instruct",
+        "--max-model-len=1536",
+        "--dtype=bfloat16",
+        "--gpu-memory-utilization=0.4",
+      ]
+    volumes:
+      - ./volumes/hf-cache:/root/.cache/huggingface
+      - ./volumes/vllm-cache:/root/.cache/vllm
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # Optional: Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./volumes/prometheus-data:/prometheus
+    restart: unless-stopped
+
+  # Optional: Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./volumes/grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    restart: unless-stopped
+
+networks:
+  default:
+    name: unmute-autoconnect

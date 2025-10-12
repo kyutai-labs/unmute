@@ -1,0 +1,42 @@
+{
+  "devices": [
+    {
+      "name": "living_room",
+      "host": "192.168.1.100",
+      "port": 8765,
+      "voice": "Watercooler",
+      "instructions": {
+        "type": "smalltalk"
+      },
+      "auto_reconnect": true,
+      "reconnect_delay": 5.0,
+      "enabled": true
+    },
+    {
+      "name": "kitchen",
+      "host": "192.168.1.101",
+      "port": 8765,
+      "voice": "Gertrude",
+      "instructions": {
+        "type": "constant",
+        "text": "You are a helpful kitchen assistant. Keep responses brief and practical."
+      },
+      "auto_reconnect": true,
+      "reconnect_delay": 3.0,
+      "enabled": true
+    },
+    {
+      "name": "office",
+      "host": "192.168.1.102",
+      "port": 8765,
+      "voice": "Dev (news)",
+      "instructions": {
+        "type": "constant",
+        "text": "You are a professional assistant for office work. Be concise and helpful."
+      },
+      "auto_reconnect": true,
+      "reconnect_delay": 5.0,
+      "enabled": false
+    }
+  ]
+}
