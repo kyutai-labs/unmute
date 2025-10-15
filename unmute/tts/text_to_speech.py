@@ -322,6 +322,8 @@ class TextToSpeech(ServiceWithStartup):
                     #   apparently it has some internal buffering) so we only send the
                     #   text messages at the real time when they're actually supposed to
                     #   be displayed. Precise timing/buffering is less important here.
+                    # We use start_s instead of stop_s because otherwise we might miss the
+                    # last word.
                     output_queue.put(message, message.start_s)
 
                 for _, message in output_queue.get_nowait():
