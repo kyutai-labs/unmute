@@ -29,6 +29,8 @@ def preprocess_messages_for_llm(
         if message["content"].replace(INTERRUPTION_CHAR, "") == "":
             continue
 
+        message["content"] = message["content"].replace(INTERRUPTION_CHAR, "")
+
         if output and message["role"] == output[-1]["role"]:
             output[-1]["content"] += " " + message["content"]
         else:

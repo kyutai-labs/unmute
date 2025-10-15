@@ -322,10 +322,7 @@ class TextToSpeech(ServiceWithStartup):
                     #   apparently it has some internal buffering) so we only send the
                     #   text messages at the real time when they're actually supposed to
                     #   be displayed. Precise timing/buffering is less important here.
-                    # By using stop_s instead of start_s, we ensure that anything shown
-                    # has already been said, so that if there's an interruption, the
-                    # chat history matches what's actually been said.
-                    output_queue.put(message, message.stop_s)
+                    output_queue.put(message, message.start_s)
 
                 for _, message in output_queue.get_nowait():
                     if isinstance(message, TTSAudioMessage):
