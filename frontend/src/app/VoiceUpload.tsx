@@ -124,11 +124,15 @@ const VoiceUpload = ({
         </p>
         {/* Commented out for now until we have more clarity. */}
         <p className="mb-2">
-          You can also help us by{" "}
+          <strong>Want more voices?</strong> You can{" "}
           <Link href="/voice-donation" className="underline text-green">
-            anonymously donating your voice
+            anonymously donate your voice
           </Link>{" "}
-          to be released alongside the open-source release of our TTS model.
+          to be added to the{" "}
+          <Link href="https://huggingface.co/kyutai/tts-voices">
+            voice repository
+          </Link>{" "}
+          for use with Kyutai TTS.
         </p>
         {!file && (
           <div className="flex flex-row gap-2 justify-center">

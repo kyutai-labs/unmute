@@ -30,6 +30,39 @@ export default function VoiceDonation() {
     "not_started" | "uploading" | "finished"
   >("not_started");
 
+  const [transcription, setTranscription] = useState<string>("");
+
+  const transcribeAudio = async (audioBlobUrl: string) => {
+    if (!audioBlobUrl) return;
+    try {
+      const blob = await fetch(audioBlobUrl).then((r) => r.blob());
+      const formData = new FormData();
+      formData.append("file", blob, "audio.wav");
+
+      const response = await fetch(
+        "https://unmute.sh/stt-server/api/asr-streaming?auth_id=public_token",
+        {
+          method: "POST",
+          headers: {
+            "kyutai-api-key": "public_token",
+          },
+          body: formData,
+        }
+      );
+      const result = await response.json();
+      const words = Array.isArray(result)
+        ? result.filter((item) => item.type === "Word").map((item) => item.text)
+        : [];
+      setTranscription(words.join(" "));
+    } catch (err) {
+      setTranscription("");
+      addError(
+        "Failed to transcribe audio. " +
+          (err instanceof Error ? err.message : "")
+      );
+    }
+  };
+
   const addError = (error: string) => {
     setErrors((prev) => [...prev, makeErrorItem(error)]);
   };
@@ -172,7 +205,12 @@ export default function VoiceDonation() {
               </p>
             )}
             <VoiceRecording
-              setRecordedAudio={setRecordedAudio}
+              setRecordedAudio={(audio) => {
+                setRecordedAudio(audio);
+                if (audio?.blobUrl) {
+                  transcribeAudio(audio.blobUrl);
+                }
+              }}
               setError={(error: string | null) => {
                 if (!error) return;
                 addError(error);
@@ -190,6 +228,17 @@ export default function VoiceDonation() {
             {/* {!verification && <div className="mt-20"></div>} */}
             {recordedAudio && (
               <div className="flex flex-col gap-2">
+                <audio
+                  controls
+                  src={recordedAudio.blobUrl}
+                  className="w-full mt-2"
+                />
+                {transcription && (
+                  <div className="bg-gray text-white my-2 px-2 py-4 rounded">
+                    <strong>Transcription:</strong>
+                    <p className="mt-1">{transcription}</p>
+                  </div>
+                )}
                 <label className="flex flex-col gap-1">
                   Email to contact you if needed, or if you choose to withdraw
                   (not published):
