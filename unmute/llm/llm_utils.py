@@ -29,6 +29,10 @@ def preprocess_messages_for_llm(
         if message["content"].replace(INTERRUPTION_CHAR, "") == "":
             continue
 
+        # If the llm was interrupted we don't want to insert the INTERRUPTION_CHAR
+        # into the context, otherwise the LLM might want to repeat it.
+        message["content"] = message["content"].strip().removesuffix(INTERRUPTION_CHAR)
+
         if output and message["role"] == output[-1]["role"]:
             output[-1]["content"] += " " + message["content"]
         else:
