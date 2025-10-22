@@ -147,7 +147,7 @@ services:
       - moshi-server-target:/app/target
       - uv-cache:/root/.cache/uv
       - hf-cache:/root/.cache/huggingface/hub
-      - tts-logs:/logs
+      - tts-logs:/tmp/unmute_logs
     stop_grace_period: 10s # change if needed
     deploy:
       labels:
@@ -190,7 +190,7 @@ services:
       - moshi-server-target:/app/target
       - uv-cache:/root/.cache/uv
       - hf-cache:/root/.cache/huggingface/hub
-      - stt-logs:/logs
+      - stt-logs:/tmp/unmute_logs
     stop_grace_period: 10s # change if needed
     deploy:
       labels:
@@ -229,7 +229,7 @@ services:
       - moshi-server-target:/app/target
       - uv-cache:/root/.cache/uv
       - hf-cache:/root/.cache/huggingface/hub
-      - voice-cloning-logs:/logs
+      - voice-cloning-logs:/tmp/unmute_logs
     deploy:
       labels:
         - "prometheus-port=8080"
