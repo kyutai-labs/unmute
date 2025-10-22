@@ -1,5 +1,5 @@
 static_dir = "./static/"
-log_dir = "/tmp/unmute_logs"
+log_dir = "/logs"
 instance_name = "tts"
 authorized_ids = ["public_token"]
 
@@ -11,7 +11,7 @@ batch_size = 4  # NOTE: make this smaller if running on one GPU
 text_bos_token = 1
 
 [modules.tts_py.py]
-log_folder = "/tmp/unmute_logs"
+log_folder = "/logs"
 # We could use replace **/*.safetensors with unmute-prod-website/*.safetensors
 # to only get the voices used in Unmute, but we are using the TTS for the demo
 # on the project page too and for that we want to load the other voices as well

@@ -1,5 +1,5 @@
 static_dir = "./static/"
-log_dir = "$HOME/tmp/tts-logs"
+log_dir = "/logs"
 instance_name = "voice"
 authorized_ids = ["public_token"]
 
