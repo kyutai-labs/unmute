@@ -16,8 +16,7 @@ dependencies = [
     "prometheus-fastapi-instrumentator==7.1.0",
     "prometheus-client==0.21.0",
     "ruamel-yaml>=0.18.10",
-    "redis>=6.0.0",
-    "huggingface-hub>=0.30.2",
+    "redis>=6.0.0"
 ]
 
 [build-system]
