@@ -1,6 +1,6 @@
 "use client";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMicrophoneAccess } from "./useMicrophoneAccess";
 import { base64DecodeOpus, base64EncodeOpus } from "./audioUtil";
 import SlantedButton from "@/app/SlantedButton";
@@ -52,7 +52,26 @@ const Unmute = () => {
   useEffect(() => {
     if (!backendServerUrl) return;
 
-    setWebSocketUrl(backendServerUrl.toString() + "/v1/realtime");
+    try {
+      const backendUrl = new URL(backendServerUrl);
+      const websocketUrl = new URL("/v1/realtime", backendUrl);
+      websocketUrl.protocol = backendUrl.protocol === "https:" ? "wss:" : "ws:";
+      const resolvedWebsocketUrl = websocketUrl.toString();
+      console.info("[Unmute] Resolved WebSocket URL:", resolvedWebsocketUrl);
+      setWebSocketUrl(resolvedWebsocketUrl);
+    } catch (error) {
+      console.error(
+        "[Unmute] Failed to resolve WebSocket URL from backendServerUrl:",
+        backendServerUrl,
+        error
+      );
+      setWebSocketUrl(null);
+      setHealthStatus({
+        connected: "no",
+        ok: false,
+      });
+      return;
+    }
 
     const checkHealth = async () => {
       try {
@@ -88,11 +107,39 @@ const Unmute = () => {
     checkHealth();
   }, [backendServerUrl]);
 
+  useEffect(() => {
+    if (!backendServerUrl) {
+      console.info("[Unmute] backendServerUrl not yet resolved");
+    } else {
+      console.info("[Unmute] Using backendServerUrl:", backendServerUrl);
+    }
+  }, [backendServerUrl]);
+
+  useEffect(() => {
+    if (webSocketUrl) {
+      console.info("[Unmute] WebSocket target set to:", webSocketUrl);
+    }
+  }, [webSocketUrl]);
+
+  const websocketOptions = useMemo(
+    () => ({
+      protocols: ["realtime"],
+      onOpen: () => {
+        console.info("[Unmute] WebSocket connected:", webSocketUrl);
+      },
+      onError: (event: WebSocketEventMap["error"]) => {
+        console.error("[Unmute] WebSocket error:", event, webSocketUrl);
+      },
+      onClose: (event: WebSocketEventMap["close"]) => {
+        console.info("[Unmute] WebSocket closed:", event.code, event.reason, webSocketUrl);
+      },
+    }),
+    [webSocketUrl]
+  );
+
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     webSocketUrl || null,
-    {
-      protocols: ["realtime"],
-    },
+    websocketOptions,
     shouldConnect
   );
 
