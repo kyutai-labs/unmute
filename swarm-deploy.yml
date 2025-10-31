@@ -242,7 +242,7 @@ services:
           memory: 16G
 
   llm:
-    image: vllm/vllm-openai:v0.9.1
+    image: vllm/vllm-openai:v0.11.0
     command:
       [
         "--model=${KYUTAI_LLM_MODEL}",
