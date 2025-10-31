@@ -5,6 +5,10 @@ export const useBackendServerUrl = () => {
 
   // Get the backend server URL. This is a bit involved to support different deployment methods.
   useEffect(() => {
+    const logResolvedUrl = (source: string, url: string) => {
+      console.info(`[useBackendServerUrl] Using ${source} backend URL: ${url}`);
+    };
+
     if (typeof window !== "undefined") {
       const isInDocker = ["true", "1"].includes(process.env.NEXT_PUBLIC_IN_DOCKER?.toLowerCase() || "");
 
@@ -26,7 +30,9 @@ export const useBackendServerUrl = () => {
           }
           backendUrl.search = "";
 
-          setBackendServerUrl(backendUrl.toString().replace(/\/$/, ""));
+          const resolvedUrl = backendUrl.toString().replace(/\/$/, "");
+          setBackendServerUrl(resolvedUrl);
+          logResolvedUrl("env", resolvedUrl);
           return;
         } catch (error) {
           console.error(
@@ -43,7 +49,9 @@ export const useBackendServerUrl = () => {
       }
       backendUrl.pathname = prefix;
       backendUrl.search = ""; // strip any query parameters
-      setBackendServerUrl(backendUrl.toString().replace(/\/$/, "")); // remove trailing slash
+      const resolvedUrl = backendUrl.toString().replace(/\/$/, ""); // remove trailing slash
+      setBackendServerUrl(resolvedUrl);
+      logResolvedUrl("default", resolvedUrl);
     }
   }, []);
 
