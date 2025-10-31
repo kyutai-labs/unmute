@@ -10,6 +10,33 @@ export const useBackendServerUrl = () => {
 
       const prefix = isInDocker ? "/api" : "";
 
+      const rawEnvUrl = process.env.NEXT_PUBLIC_BACKEND_SERVER_URL?.trim();
+      if (rawEnvUrl) {
+        try {
+          const backendUrl = rawEnvUrl.includes("://")
+            ? new URL(rawEnvUrl)
+            : new URL(`${window.location.protocol}//${rawEnvUrl}`);
+
+          const hasCustomPath =
+            backendUrl.pathname !== "" &&
+            backendUrl.pathname !== "/" &&
+            backendUrl.pathname !== prefix;
+          if (!hasCustomPath && prefix) {
+            backendUrl.pathname = prefix;
+          }
+          backendUrl.search = "";
+
+          setBackendServerUrl(backendUrl.toString().replace(/\/$/, ""));
+          return;
+        } catch (error) {
+          console.error(
+            "Invalid NEXT_PUBLIC_BACKEND_SERVER_URL. Falling back to default.",
+            rawEnvUrl,
+            error
+          );
+        }
+      }
+
       const backendUrl = new URL("", window.location.href);
       if (!isInDocker) {
         backendUrl.port = "8000";
