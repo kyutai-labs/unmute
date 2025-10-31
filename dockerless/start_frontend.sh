@@ -8,4 +8,3 @@ cd frontend
 pnpm install
 pnpm env use --global lts
 pnpm dev
-# pnpm run dev -- -H 0.0.0.0 -p 3000
