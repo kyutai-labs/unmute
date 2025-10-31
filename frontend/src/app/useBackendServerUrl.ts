@@ -38,7 +38,7 @@ export const useBackendServerUrl = () => {
       }
 
       const backendUrl = new URL("", window.location.href);
-      if (!isInDocker) {
+      if (!isInDocker && !rawEnvUrl) {
         backendUrl.port = "8000";
       }
       backendUrl.pathname = prefix;
