@@ -254,7 +254,7 @@ This points to your localhost server. Alternatively, for OpenAI, you can use
 The section for vllm can then be removed, as it is no longer needed:
 ```yaml
   llm:
-    image: vllm/vllm-openai:v0.9.1
+    image: vllm/vllm-openai:v0.11.0
     [..]
 ```
 
