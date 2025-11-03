@@ -58,7 +58,7 @@ def generate_verification() -> VoiceDonationVerification:
 
 
 class VoiceDonationSubmission(BaseModel):
-    format_version: Literal["1.0"] = "1.0"
+    format_version: Literal["1.0", "1.1"] = "1.1"
     # The email is kept so that the person can contact us if they want to withdraw their
     # donation, not published.
     email: str
