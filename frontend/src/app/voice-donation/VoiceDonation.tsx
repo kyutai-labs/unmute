@@ -114,6 +114,7 @@ export default function VoiceDonation() {
       email: email,
       nickname: nickname,
       verification_id: verification?.id || null,
+      transcription_from_client: transcription,
     };
     formData.append("metadata", JSON.stringify(metadata));
 
