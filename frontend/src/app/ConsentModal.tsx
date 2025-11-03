@@ -74,8 +74,17 @@ export default function ConsentModal() {
   if (cookieConsentGiven === true) {
     // To debug Google Analytics, add debugMode={true} here and go to the Tag Assistant:
     // https://tagassistant.google.com/
-    // Make sure you don't use an adblocker for localhost, as it will block the GA script.
-    return <GoogleAnalytics gaId="G-MLN0BSWF97" />;
+    if (
+      typeof window !== "undefined" &&
+      window.location.hostname === "unmute.sh" // only load on production site
+    ) {
+      // If you want to use Google Analytics for your deployment, please change the GA ID and accepted hostname here.
+      // Otherwise we get your traffic mixed with Unmute's traffic
+      return <GoogleAnalytics gaId="G-MLN0BSWF97" />;
+    } else {
+      console.debug("Cookie consent given, but not loading GA since not prod");
+      return null;
+    }
   }
 
   if (cookieConsentGiven === false) {
