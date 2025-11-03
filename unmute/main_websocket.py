@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import logging
+import os
 from functools import cache, partial
 from typing import Annotated
 
@@ -80,8 +81,43 @@ ClientEventAdapter = TypeAdapter(
     Annotated[ora.ClientEvent, Field(discriminator="type")]
 )
 
-# Allow CORS for local development
-CORS_ALLOW_ORIGINS = ["http://localhost", "http://localhost:3000"]
+DEFAULT_CORS_ALLOW_ORIGINS = ["http://localhost", "http://localhost:3000"]
+
+
+def _normalize_origin(origin: str | None) -> str | None:
+    if origin is None:
+        return None
+    return origin.rstrip("/")
+
+
+def _load_cors_allow_origins() -> list[str]:
+    raw_env = os.getenv("UNMUTE_CORS_ALLOW_ORIGINS")
+    defaults = [_normalize_origin(origin) for origin in DEFAULT_CORS_ALLOW_ORIGINS]
+
+    if not raw_env:
+        return [origin for origin in defaults if origin]
+
+    env_values = [
+        _normalize_origin(value.strip())
+        for value in raw_env.split(",")
+        if value.strip()
+    ]
+
+    # Preserve order while removing duplicates and skipping None.
+    seen = set()
+    merged: list[str] = []
+    for origin in [*defaults, *env_values]:
+        if not origin or origin in seen:
+            continue
+        seen.add(origin)
+        merged.append(origin)
+
+    return merged
+
+
+CORS_ALLOW_ORIGINS = _load_cors_allow_origins()
+CORS_ALLOW_ORIGINS_SET = set(CORS_ALLOW_ORIGINS)
+logger.info("Configured CORS allow origins: %s", CORS_ALLOW_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOW_ORIGINS,
@@ -293,6 +329,18 @@ async def websocket_route(websocket: WebSocket):
     mt.SESSIONS.inc()
     mt.ACTIVE_SESSIONS.inc()
     session_watch = Stopwatch()
+    origin = websocket.headers.get("origin")
+    normalized_origin = _normalize_origin(origin)
+    client = websocket.client
+    client_host = getattr(client, "host", "unknown")
+    client_port = getattr(client, "port", "unknown")
+    logger.info(
+        "WebSocket connection attempt from origin=%s (normalized=%s) client=%s:%s",
+        origin or "<none>",
+        normalized_origin or "<none>",
+        client_host,
+        client_port,
+    )
     if PROFILE_ACTIVE and _current_profile is None:
         from pyinstrument import Profiler
 
@@ -583,7 +631,8 @@ async def emit_loop(
 
 def _cors_headers_for_error(request: Request):
     origin = request.headers.get("origin")
-    allow_origin = origin if origin in CORS_ALLOW_ORIGINS else None
+    normalized_origin = _normalize_origin(origin)
+    allow_origin = origin if normalized_origin in CORS_ALLOW_ORIGINS_SET else None
     headers = {"Access-Control-Allow-Credentials": "true"}
     if allow_origin:
         headers["Access-Control-Allow-Origin"] = allow_origin
