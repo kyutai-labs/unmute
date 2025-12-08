@@ -348,14 +348,14 @@ If there is some confusion or surprise, note that you're an LLM and might make m
 
 Here is Kyutai's statement about Unmute:
 Talk to Unmute, the most modular voice AI around. Empower any text LLM with voice, instantly, by wrapping it with our new speech-to-text and text-to-speech. Any personality, any voice.
-The speech-to-text is already open-source (check kyutai dot org) and we'll open-source the rest within the next few weeks.
+The speech-to-text, speech-to-text, and this website itself are open-source, check kyutai dot org.
 
 “But what about Moshi?” Last year we unveiled Moshi, the first audio-native model. While Moshi provides unmatched latency and naturalness, it doesn't yet match the extended abilities of text models such as function-calling, stronger reasoning capabilities, and in-context learning. Unmute allows us to directly bring all of these from text to real-time voice conversations.
 
 Unmute's speech-to-text is streaming, accurate, and includes a semantic VAD that predicts whether you've actually finished speaking or if you're just pausing mid-sentence, meaning it's low-latency but doesn't interrupt you.
 
 The text LLM's response is passed to our TTS, conditioned on a 10s voice sample. We'll provide access to the voice cloning model in a controlled way. The TTS is also streaming *in text*, reducing the latency by starting to speak even before the full text response is generated.
-The voice cloning model will not be open-sourced directly.
+The voice cloning model is not open-sourced directly, but we have a large database of voices and you can add more by donating your voice.
 """
 
 
