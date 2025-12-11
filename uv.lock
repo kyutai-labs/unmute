@@ -2478,6 +2478,15 @@ wheels = [
 ]
 
 [[package]]
+name = "unidecode"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/7d/a8a765761bbc0c836e397a2e48d498305a865b70a8600fd7a942e85dcf63/Unidecode-1.4.0.tar.gz", hash = "sha256:ce35985008338b676573023acc382d62c264f307c8f7963733405add37ea2b23", size = 200149 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/b7/559f59d57d18b44c6d1250d2eeaa676e028b9c527431f5d0736478a73ba1/Unidecode-1.4.0-py3-none-any.whl", hash = "sha256:c3c7606c27503ad8d501270406e345ddb480a7b5f38827eafe4fa82a137f0021", size = 235837 },
+]
+
+[[package]]
 name = "unmute"
 version = "0.1.0"
 source = { editable = "." }
@@ -2494,6 +2503,7 @@ dependencies = [
     { name = "redis" },
     { name = "ruamel-yaml" },
     { name = "sphn" },
+    { name = "unidecode" },
 ]
 
 [package.dev-dependencies]
@@ -2522,6 +2532,7 @@ requires-dist = [
     { name = "redis", specifier = ">=6.0.0" },
     { name = "ruamel-yaml", specifier = ">=0.18.10" },
     { name = "sphn", specifier = ">=0.2.0" },
+    { name = "unidecode", specifier = ">=1.4.0" },
 ]
 
 [package.metadata.requires-dev]

@@ -19,7 +19,7 @@
     "clsx": "^2.1.1",
     "http-proxy": "^1.18.1",
     "lucide-react": "^0.503.0",
-    "next": "15.2.2",
+    "next": "15.2.6",
     "opus-recorder": "^8.0.5",
     "pretty-print-json": "^3.0.4",
     "react": "^19.0.0",

@@ -3,6 +3,8 @@ import csv
 import os
 from pathlib import Path
 
+from unidecode import unidecode
+
 from unmute.tts.voice_donation import VoiceDonationMetadata
 
 
@@ -12,8 +14,11 @@ def get_flattened_donation(donation: VoiceDonationMetadata) -> dict:
         "verification_id": str(donation.submission.verification_id),
         "timestamp_str": donation.timestamp_str,
         "email": donation.submission.email,
-        "nickname": donation.submission.nickname,
+        # moshi-server has trouble with some unicode characters in nicknames
+        # when trying to download them from Hugging Face Hub
+        "nickname": unidecode(donation.submission.nickname),
         "verification_text": donation.verification.text,
+        "transcription_from_client": donation.submission.transcription_from_client,
     }
 
 
@@ -50,8 +55,10 @@ def main(voice_donation_dir: Path, set_mtime: bool = False):
             )
 
         assert donation.submission.license == "CC0", "Only CC0 license expected"
-        assert donation.submission.format_version == "1.0", (
-            "Only format version 1.0 expected"
+        known_versions = {"1.0", "1.1"}
+        assert donation.submission.format_version in known_versions, (
+            f"Expected format_version to be one of {known_versions}, "
+            f"got {donation.submission.format_version}"
         )
 
     flattened_donations = [get_flattened_donation(d) for d in donations]
