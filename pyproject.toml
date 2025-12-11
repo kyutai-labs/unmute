@@ -17,6 +17,7 @@ dependencies = [
     "prometheus-client==0.21.0",
     "ruamel-yaml>=0.18.10",
     "redis>=6.0.0",
+    "unidecode>=1.4.0",
 ]
 
 [build-system]
