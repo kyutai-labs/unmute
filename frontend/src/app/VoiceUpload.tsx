@@ -123,18 +123,14 @@ const VoiceUpload = ({
           purposes only. Use responsibly.
         </p>
         <p>
-          <strong>Want more voices?</strong> You can{" "}
-          <Link href="/voice-donation" className="underline text-green">
-            anonymously donate your voice
-          </Link>{" "}
-          to be added to the{" "}
+          More voices for Kyutai TTS 1.6B are available in our{" "}
           <Link
             href="https://huggingface.co/kyutai/tts-voices"
             className="underline text-green"
           >
             voice repository
-          </Link>{" "}
-          for use with Kyutai TTS.
+          </Link>
+          .
         </p>
         <p className="mb-2">
           Also check out{" "}
