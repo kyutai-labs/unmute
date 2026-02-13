@@ -211,6 +211,14 @@ System prompts like this are defined in [`unmute/llm/system_prompt.py`](unmute/l
 Note that the file is only loaded when the backend starts and is then cached, so if you change something in `voices.yaml`,
 you'll need to restart the backend.
 
+You can check out the available voices in our [voice repository](https://huggingface.co/kyutai/tts-voices).
+To use one of the voices, change the `path_on_server` field in [`voices.yaml`](voices.yaml) to the relative
+path of the voice you want, for example [`voice-donations/Haku.wav`](https://huggingface.co/kyutai/tts-voices/blob/main/voice-donations/Haku.wav).
+
+From June 2025 to February 2026, we also ran the [Unmute Voice Donation Project](https://unmute.sh/voice-donation),
+where volunteers provided their voices for use with Kyutai TTS 1.6B (used by Unmute) and other open-source TTS models.
+You can find these voices in the [voice repository](https://huggingface.co/kyutai/tts-voices) as well.
+
 ### Using external LLM servers
 
 The Unmute backend can be used with any OpenAI compatible LLM server. By default, the `docker-compose.yml` configures VLLM to enable a fully self-contained, local setup.

@@ -1,12 +1,12 @@
 import { Metadata } from "next";
-import VoiceDonation from "./VoiceDonation";
+import VoiceDonationOver from "./VoiceDonationOver";
 
 export const metadata: Metadata = {
-  title: "Unmute - Voice Donation",
+  title: "Unmute Voice Donation Project",
   description: "Help us improve our voice models by donating your voice.",
 };
 
-export default function VoiceDonationPage() {
+export default function VoiceDonationOverPage() {
   // We need this wrapper to use the metadata export
-  return <VoiceDonation />;
+  return <VoiceDonationOver />;
 }

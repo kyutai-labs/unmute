@@ -3,6 +3,7 @@
 :root {
   --green: #39F2AE;
   --offwhite: #EFEFEF;
+  --textgray: rgb(181, 188, 197);
   --lightgray: #9d9d9d;
   /* #B5BCC5; */
   --gray: #343434;
@@ -62,6 +63,7 @@
   /* TODO: deduplicate */
   --color-green: var(--green);
   --color-offwhite: var(--offwhite);
+  --color-textgray: var(--textgray);
   --color-lightgray: var(--lightgray);
   --color-gray: var(--gray);
   --color-darkgray: var(--darkgray);
