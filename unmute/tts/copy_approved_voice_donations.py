@@ -38,7 +38,8 @@ def main():
         confirm = (
             input(
                 f"Output directory {args.output_dir} is not empty. "
-                "Will clear .wav and .wav.safetensors files before continuing. "
+                "Will clear .wav and .wav.safetensors files (except for _enhanced.wav) "
+                "before continuing. "
                 "Ok? (y/N): "
             )
             .strip()
@@ -49,8 +50,10 @@ def main():
             exit(1)
 
         for item in args.output_dir.iterdir():
-            if item.is_file() and (
-                item.suffix == ".wav" or item.name.endswith(".wav.safetensors")
+            if (
+                item.is_file()
+                and (item.suffix == ".wav" or item.name.endswith(".wav.safetensors"))
+                and not item.name.endswith("_enhanced.wav")
             ):
                 item.unlink()
 
