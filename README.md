@@ -217,6 +217,7 @@ path of the voice you want, for example [`voice-donations/Haku.wav`](https://hug
 
 From June 2025 to February 2026, we also ran the [Unmute Voice Donation Project](https://unmute.sh/voice-donation),
 where volunteers provided their voices for use with Kyutai TTS 1.6B (used by Unmute) and other open-source TTS models.
+You can find these voices in the [voice repository](https://huggingface.co/kyutai/tts-voices) as well.
 
 ### Using external LLM servers
 
