@@ -1,0 +1,34 @@
+http:
+  routers:
+    backend:
+      rule: PathPrefix(`/api`)
+      entryPoints:
+        - web
+      middlewares:
+        - strip-api
+      service: backend
+      priority: 100
+
+    frontend:
+      rule: PathPrefix(`/`)
+      entryPoints:
+        - web
+      service: frontend
+      priority: 10
+
+  middlewares:
+    strip-api:
+      replacePathRegex:
+        regex: ^/api/(.*)
+        replacement: /$1
+
+  services:
+    backend:
+      loadBalancer:
+        servers:
+          - url: http://backend:80
+
+    frontend:
+      loadBalancer:
+        servers:
+          - url: http://frontend:3000

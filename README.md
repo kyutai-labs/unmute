@@ -86,6 +86,16 @@ echo $HUGGING_FACE_HUB_TOKEN  # This should print hf_...something...
 docker compose up --build
 ```
 
+#### Blackwell (RTX 50xx / sm_120)
+
+If you have an NVIDIA Blackwell GPU (e.g. RTX 5070ti) you need a newer PyTorch build.
+Use the Blackwell python environment like this:
+
+```bash
+echo $HUGGING_FACE_HUB_TOKEN  # This should print hf_...something...
+MOSHI_PYTHON_ENV_DIR=python-env-blackwell docker compose up --build
+```
+
 #### Using multiple GPUs
 
 On [Unmute.sh](https://unmute.sh/), we run the speech-to-text, text-to-speech, and the VLLM server on separate GPUs,

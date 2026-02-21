@@ -1,0 +1,23 @@
+[project]
+name = "moshi-server-python"
+version = "0.1.0"
+requires-python = "==3.12.8"
+
+# This project exists solely to provide the Python deps that moshi-server
+# dynamically imports at runtime (TTS/STT modules). We pin torch/torchaudio to
+# a Blackwell-capable build.
+dependencies = [
+  "moshi==0.2.13",
+
+  # Blackwell (sm_120) support
+  "torch==2.8.0",
+  "torchaudio==2.8.0",
+
+  # moshi extras used by kyutai models
+  "xformers",
+  "pydantic",
+  "julius",
+
+  # build/runtime helpers
+  "setuptools",
+]

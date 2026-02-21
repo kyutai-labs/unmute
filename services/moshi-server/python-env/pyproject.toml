@@ -1,0 +1,21 @@
+[project]
+name = "moshi-server-python"
+version = "0.1.0"
+requires-python = "==3.12.8"
+
+# Default (non-Blackwell) environment.
+dependencies = [
+  "moshi==0.2.13",
+
+  # Pre-Blackwell CUDA build.
+  "torch==2.6.0",
+  "torchaudio==2.6.0",
+
+  # moshi extras used by kyutai models
+  "xformers",
+  "pydantic",
+  "julius",
+
+  # build/runtime helpers
+  "setuptools",
+]

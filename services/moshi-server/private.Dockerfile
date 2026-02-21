@@ -42,4 +42,6 @@ ENV RUST_BACKTRACE=1
 
 COPY . .
 
-ENTRYPOINT ["uv", "run", "--locked", "--project", "./moshi-server", "./start_moshi_server_private.sh"]
+RUN chmod +x ./entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh", "./start_moshi_server_private.sh"]

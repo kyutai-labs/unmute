@@ -1,11 +1,12 @@
 # See NOTE comments for places to modify.
 services:
   traefik:
-    image: traefik:v3.3.1
+    image: traefik:v3.6.0
     command:
-      # Swarm provider configuration
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
+      # Docker Engine v29+ requires API >= 1.44, but Traefik's Docker provider
+      # currently speaks v1.24, so we use the file provider for local dev.
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
 
       # This is set up for HTTP. If you want HTTPS support for production, use Docker Swarm
       # (check out swarm-deploy.yml) or ask ChatGPT to modify this file for you.
@@ -13,7 +14,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik:/etc/traefik:ro"
 
   frontend:
     image: unmute-frontend:latest
@@ -60,6 +61,10 @@ services:
       dockerfile: public.Dockerfile
     environment:
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
+      # Switch between the default and Blackwell torch envs.
+      # - default: torch 2.6 (pre-Blackwell)
+      # - python-env-blackwell: torch 2.8
+      - MOSHI_PYTHON_ENV_DIR=${MOSHI_PYTHON_ENV_DIR:-python-env}
     volumes:
       - ./volumes/hf-cache:/root/.cache/huggingface
       - ./volumes/cargo-registry-tts:/root/.cargo/registry
@@ -83,6 +88,7 @@ services:
       dockerfile: public.Dockerfile
     environment:
       - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
+      - MOSHI_PYTHON_ENV_DIR=${MOSHI_PYTHON_ENV_DIR:-python-env}
     volumes:
       - ./volumes/hf-cache:/root/.cache/huggingface
       - ./volumes/cargo-registry-stt:/root/.cargo/registry
