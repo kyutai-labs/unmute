@@ -98,8 +98,14 @@ export default function ConsentModal() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex-1 text-sm text-textgray">
             <p className="text-sm text-textgray mb-2">
-              Can we use cookies to improve your experience and analyze site
-              usage?{" "}
+              Can we use cookies according to our{" "}
+              <a
+                href="https://kyutai.org/privacy-policy"
+                className="underline"
+              >
+                Privacy Policy
+              </a>{" "}
+              to improve your experience and analyze site usage?{" "}
               {!showDetails && (
                 <button
                   onClick={() => setShowDetails(true)}
