@@ -281,9 +281,9 @@ services:
         - "traefik.http.routers.llm.tls.certresolver=letsencrypt_resolver"
         - "traefik.http.services.llm.loadbalancer.server.port=8000"
         - "traefik.http.routers.llm.priority=100"
-      # 4 containers are used, one gpu per container, and the requests end up being load balanced
+      # 2 containers are used, 2 gpus per container, and the requests end up being load balanced
       # between them. There is no "smart" routing but it's enough for our use case.
-      replicas: 4
+      replicas: 2
       update_config:
         delay: 120s # it takes a very long time to boot up and we want no downtime
       resources:
@@ -291,7 +291,7 @@ services:
           generic_resources:
             - discrete_resource_spec:
                 kind: gpu
-                value: 1 # put more if needed
+                value: 2 # put more if needed
 
   # -------------------------------------------------------------------------
   # Monitoring
