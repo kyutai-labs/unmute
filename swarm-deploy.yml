@@ -248,10 +248,7 @@ services:
         "--model=${KYUTAI_LLM_MODEL}",
         "--max-model-len=8192",
         "--dtype=bfloat16",
-        "--tensor-parallel-size=2",  # Needed to run models that don't fit on a single GPU
-        "--tokenizer_mode=mistral",  # You can remove those args if you're not using mistral
-        "--config_format=mistral",
-        "--load-format=mistral",
+        "--tensor-parallel-size=1",  # >1 needed to run models that don't fit on a single GPU
       ]
     healthcheck:
       # The very first time it can be VERY slow, because of the download
@@ -281,17 +278,17 @@ services:
         - "traefik.http.routers.llm.tls.certresolver=letsencrypt_resolver"
         - "traefik.http.services.llm.loadbalancer.server.port=8000"
         - "traefik.http.routers.llm.priority=100"
-      # 2 containers are used, 2 gpus per container, and the requests end up being load balanced
+      # 2 containers are used, 1 gpu per container, and the requests end up being load balanced
       # between them. There is no "smart" routing but it's enough for our use case.
       replicas: 2
       update_config:
         delay: 120s # it takes a very long time to boot up and we want no downtime
-      # resources:
-      #   reservations:
-      #     generic_resources:
-      #       - discrete_resource_spec:
-      #           kind: gpu
-      #           value: 2 # put more if needed
+      resources:
+        reservations:
+          generic_resources:
+            - discrete_resource_spec:
+                kind: gpu
+                value: 1 # put more if needed
 
   # -------------------------------------------------------------------------
   # Monitoring

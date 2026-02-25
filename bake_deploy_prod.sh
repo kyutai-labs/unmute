@@ -26,7 +26,7 @@ set -x # Print commands
 
 export DOMAIN=unmute.sh
 # Note that using non-Mistral models also requires changing the vLLM args in ./swarm-deploy.yml
-export KYUTAI_LLM_MODEL=mistralai/Mistral-Small-3.2-24B-Instruct-2506
+export KYUTAI_LLM_MODEL=google/gemma-3-12b-it
 export DOCKER_HOST=ssh://root@${DOMAIN}
 
 echo "If you get an connection error, do: ssh root@${DOMAIN}"
