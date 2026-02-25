@@ -7,7 +7,6 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi[standard]>=0.115.12",
     "fastrtc==0.0.23",
-    "mistralai>=1.5.1",
     "msgpack>=1.1.0",
     "msgpack-types>=0.5.0",
     "openai>=1.70.0",
