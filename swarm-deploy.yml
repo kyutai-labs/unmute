@@ -286,12 +286,12 @@ services:
       replicas: 2
       update_config:
         delay: 120s # it takes a very long time to boot up and we want no downtime
-      resources:
-        reservations:
-          generic_resources:
-            - discrete_resource_spec:
-                kind: gpu
-                value: 2 # put more if needed
+      # resources:
+      #   reservations:
+      #     generic_resources:
+      #       - discrete_resource_spec:
+      #           kind: gpu
+      #           value: 2 # put more if needed
 
   # -------------------------------------------------------------------------
   # Monitoring
