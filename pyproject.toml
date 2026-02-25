@@ -17,6 +17,8 @@ dependencies = [
     "ruamel-yaml>=0.18.10",
     "redis>=6.0.0",
     "unidecode>=1.4.0",
+    # av is a transitive dependency, but older versions no longer ship wheels so we need to set the minimum version
+    "av>=16.0.0",
 ]
 
 [build-system]
