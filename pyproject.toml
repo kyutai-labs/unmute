@@ -7,7 +7,6 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi[standard]>=0.115.12",
     "fastrtc==0.0.23",
-    "mistralai>=1.5.1",
     "msgpack>=1.1.0",
     "msgpack-types>=0.5.0",
     "openai>=1.70.0",
@@ -18,6 +17,8 @@ dependencies = [
     "ruamel-yaml>=0.18.10",
     "redis>=6.0.0",
     "unidecode>=1.4.0",
+    # av is a transitive dependency, but older versions no longer ship wheels so we need to set the minimum version
+    "av>=16.0.0",
 ]
 
 [build-system]

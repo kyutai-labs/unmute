@@ -1,10 +1,8 @@
-import os
 import re
 from copy import deepcopy
 from functools import cache
 from typing import Any, AsyncIterator, Protocol, cast
 
-from mistralai import Mistral
 from openai import AsyncOpenAI, OpenAI
 
 from unmute.kyutai_constants import LLM_SERVER
@@ -99,26 +97,6 @@ class LLMStream(Protocol):
     ) -> AsyncIterator[str]:
         """Get a chat completion from the LLM."""
         ...
-
-
-class MistralStream:
-    def __init__(self):
-        self.current_message_index = 0
-        self.mistral = Mistral(api_key=os.environ["MISTRAL_API_KEY"])
-
-    async def chat_completion(
-        self, messages: list[dict[str, str]]
-    ) -> AsyncIterator[str]:
-        event_stream = await self.mistral.chat.stream_async(
-            model="mistral-large-latest",
-            messages=cast(Any, messages),  # It's too annoying to type this properly
-            temperature=1.0,
-        )
-
-        async for event in event_stream:
-            delta = event.data.choices[0].delta.content
-            assert isinstance(delta, str)  # make Pyright happy
-            yield delta
 
 
 def get_openai_client(
