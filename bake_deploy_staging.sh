@@ -15,4 +15,3 @@ export KYUTAI_LLM_API_KEY=$OPENROUTER_API_KEY_UNMUTE
 
 docker buildx bake -f ./swarm-deploy.yml --allow=ssh --push
 docker stack deploy --with-registry-auth --prune --compose-file ./swarm-deploy.yml llm-wrapper
-docker service scale -d llm-wrapper_tts=1 llm-wrapper_llm=1

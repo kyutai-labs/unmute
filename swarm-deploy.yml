@@ -117,7 +117,7 @@ services:
       # Running the backend is quite cheap but Python is not great at multi-threading
       # so we can run a few to get better performance. The downside is logs are harder to read;
       # for debugging set replicas to 1.
-      replicas: 16
+      replicas: 4
       update_config:
         delay: 10s      # wait 10 seconds before updating the next replica
         parallelism: 3  # update 3 replicas at a time
