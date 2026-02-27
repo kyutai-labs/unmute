@@ -6,7 +6,7 @@ uv run unmute/scripts/check_hugging_face_token_not_write.py $HUGGING_FACE_HUB_TO
 set -x # Print commands
 
 export DOMAIN=unmute.kyutai.org
-export KYUTAI_LLM_MODEL=google/gemma-3-12b-it
+export KYUTAI_LLM_MODEL=@preset/gpt-oss-120b # The name of our Openrouter preset
 export DOCKER_HOST=ssh://root@${DOMAIN}
 
 echo "If you get an connection error, do: ssh root@${DOMAIN}"
