@@ -71,7 +71,7 @@ const UnmuteHeader = () => {
         <div className="flex flex-col gap-3">
           <p>
             This is a cascaded system made by Kyutai: our speech-to-text
-            transcribes what you say, an LLM (we use Gemma 3 12B)
+            transcribes what you say, an LLM (we use GPT OSS 120B)
             generates the text of the response, and we then use our
             text-to-speech model to say it out loud.
           </p>

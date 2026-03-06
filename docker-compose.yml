@@ -103,8 +103,8 @@ services:
     command:
       [
         # NOTE: Change the LLM here if you want.
-        # (caution: gemma-3-1b-it also exists but it's slow on vLLM: https://github.com/vllm-project/vllm/issues/19575)
-        "--model=meta-llama/Llama-3.2-1B-Instruct",
+        #   You can also use an external LLM provider instead of self-hosting, see README.
+        "--model=google/gemma-3-1b-it",
         # NOTE: You can adapt this based on your GPU memory.
         # A higher value takes more memory but supports longer conversations.
         "--max-model-len=1536",

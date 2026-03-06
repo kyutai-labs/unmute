@@ -149,6 +149,10 @@ class VLLMStream:
 
         async with stream:
             async for chunk in stream:
+                if len(chunk.choices) == 0:
+                    # OpenRouter sometimes does this, some kind of keep-alive chunk with no content. Just ignore it.
+                    continue
+
                 chunk_content = chunk.choices[0].delta.content
 
                 if not chunk_content:

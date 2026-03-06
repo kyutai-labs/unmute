@@ -22,14 +22,14 @@ if [[ -n $(git status --porcelain) ]]; then
   fi
 fi
 
-set -x # Print commands
-
 export DOMAIN=unmute.sh
-# Note that using non-Mistral models also requires changing the vLLM args in ./swarm-deploy.yml
-export KYUTAI_LLM_MODEL=google/gemma-3-12b-it
 export DOCKER_HOST=ssh://root@${DOMAIN}
+export KYUTAI_LLM_MODEL=@preset/gpt-oss-120b # The name of our Openrouter preset
+export KYUTAI_LLM_API_KEY=$OPENROUTER_API_KEY_UNMUTE
 
 echo "If you get an connection error, do: ssh root@${DOMAIN}"
+
+set -x # Print the deployment commands
 
 docker buildx bake -f ./swarm-deploy.yml --allow=ssh --push
 docker stack deploy --with-registry-auth --prune --compose-file ./swarm-deploy.yml llm-wrapper

@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:v3.3.1
+    image: traefik:v3.6.9
     command:
       # Swarm provider configuration
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
@@ -63,7 +63,7 @@ services:
     deploy:
       # Having more than one replica is useful for scaling but also to avoid downtime
       # during crashes or updates. Traffic will be load balanced between replicas.
-      replicas: 5
+      replicas: 3
       update_config:
         delay: 10s
       labels:
@@ -88,7 +88,8 @@ services:
       # for a given service, allowing manual load balancing. The backend does this currently.
       - KYUTAI_STT_URL=ws://tasks.stt:8080
       - KYUTAI_TTS_URL=ws://tasks.tts:8080
-      - KYUTAI_LLM_URL=http://llm:8000
+      - KYUTAI_LLM_URL=https://openrouter.ai/api
+      - KYUTAI_LLM_API_KEY=$KYUTAI_LLM_API_KEY
       - KYUTAI_VOICE_CLONING_URL=http://voice-cloning:8080
       - KYUTAI_REDIS_URL=redis://redis:6379
       - KYUTAI_VOICE_DONATION_DIR=/voice-donation
@@ -113,7 +114,10 @@ services:
         - "traefik.http.services.backend.loadbalancer.server.port=80"
         - "traefik.http.routers.backend.priority=100" # higher priority than frontend
         - "prometheus-port=80"
-      replicas: 16
+      # Running the backend is quite cheap but Python is not great at multi-threading
+      # so we can run a few to get better performance. The downside is logs are harder to read;
+      # for debugging set replicas to 1.
+      replicas: 4
       update_config:
         delay: 10s      # wait 10 seconds before updating the next replica
         parallelism: 3  # update 3 replicas at a time
@@ -164,20 +168,13 @@ services:
         - "traefik.http.routers.tts.tls.certresolver=letsencrypt_resolver"
         - "traefik.http.services.tts.loadbalancer.server.port=8080"
         - "traefik.http.routers.tts.priority=100"
-      replicas: 3
+      replicas: 1
       update_config:
         delay: 60s # it takes a very long time to boot up and we want no downtime
       resources:
         limits:
           cpus: "8"
           memory: 16G
-        # This is how to reserve a GPU for the service in swarm. We can ask multiple GPUs
-        # for a single container but we never needed to.
-        reservations:
-          generic_resources:
-            - discrete_resource_spec:
-                kind: gpu
-                value: 1
 
   stt:
     image: rg.fr-par.scw.cloud/namespace-unruffled-tereshkova/${DOMAIN}-moshi-server:latest
@@ -212,11 +209,6 @@ services:
         limits:
           cpus: "8"
           memory: 16G
-        reservations:
-          generic_resources:
-            - discrete_resource_spec:
-                kind: gpu
-                value: 1
 
   voice-cloning:
     image: rg.fr-par.scw.cloud/namespace-unruffled-tereshkova/${DOMAIN}-moshi-server:latest
@@ -233,62 +225,13 @@ services:
     deploy:
       labels:
         - "prometheus-port=8080"
-      replicas: 2
+      replicas: 1
       update_config:
         delay: 60s #it takes a very long time to boot up and we want no downtime
       resources:
         limits:
           cpus: "8"
           memory: 16G
-
-  llm:
-    image: vllm/vllm-openai:v0.11.0
-    command:
-      [
-        "--model=${KYUTAI_LLM_MODEL}",
-        "--max-model-len=8192",
-        "--dtype=bfloat16",
-        "--tensor-parallel-size=1",  # >1 needed to run models that don't fit on a single GPU
-      ]
-    healthcheck:
-      # The very first time it can be VERY slow, because of the download
-      # and compilation. We don't care about healthcheck failures during that time.
-      # But if the healthcheck succeeds once (even before the end of the start period),
-      # it will be considered healthy and the service will be available.
-      start_period: 10m
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-    volumes:
-      - "huggingface-cache:/root/.cache/huggingface"
-      # This is where vLLM stores its cache, we want to keep it across restarts
-      # to avoid recompiling the model every time.
-      - vllm-cache:/root/.cache/vllm
-    environment:
-      - HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN
-    deploy:
-      labels:
-        - "prometheus-port=8000"
-        # Expose the LLM service via Traefik under the /llm-server path
-        - "traefik.enable=true"
-        - "traefik.http.routers.llm.rule=(Host(`www.${DOMAIN}`) || Host(`${DOMAIN}`)) && PathPrefix(`/llm-server`)"
-        - "traefik.http.routers.llm.middlewares=strip-llm"
-        - "traefik.http.middlewares.strip-llm.replacepathregex.regex=^/llm-server/(.*)"
-        - "traefik.http.middlewares.strip-llm.replacepathregex.replacement=/$$1"
-        - "traefik.http.routers.llm.entrypoints=websecure"
-        - "traefik.http.routers.llm.tls=true"
-        - "traefik.http.routers.llm.tls.certresolver=letsencrypt_resolver"
-        - "traefik.http.services.llm.loadbalancer.server.port=8000"
-        - "traefik.http.routers.llm.priority=100"
-      # 2 containers are used, 1 gpu per container, and the requests end up being load balanced
-      # between them. There is no "smart" routing but it's enough for our use case.
-      replicas: 2
-      update_config:
-        delay: 120s # it takes a very long time to boot up and we want no downtime
-      resources:
-        reservations:
-          generic_resources:
-            - discrete_resource_spec:
-                kind: gpu
-                value: 1 # put more if needed
 
   # -------------------------------------------------------------------------
   # Monitoring

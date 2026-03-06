@@ -24,7 +24,7 @@ graph LR
 - The user opens the Unmute website, served by the **frontend**.
 - By clicking "connect", the user establishes a websocket connection to the **backend**, sending audio and other metadata back and forth in real time.
   - The backend connects via websocket to the **speech-to-text** server, sending it the audio from the user and receiving back the transcription in real time.
-  - Once the speech-to-text detects that the user has stopped speaking and it's time to generate a response, the backend connects to an **LLM** server to retrieve the response. We host our own LLM using [VLLM](https://github.com/vllm-project/vllm), but you could also use an external API like OpenAI or Mistral.
+  - Once the speech-to-text detects that the user has stopped speaking and it's time to generate a response, the backend connects to an **LLM** server to retrieve the response. We serve the LLM using [OpenRouter](https://openrouter.ai/), but you can also host your own using [VLLM](https://github.com/vllm-project/vllm).
   - As the response is being generated, the backend feeds it to the **text-to-speech** server to read it out loud, and forwards the generated speech to the user.
 
 ## Setup
@@ -54,8 +54,9 @@ While we support deploying with Docker compose and without Docker, the Docker Sw
 ### LLM access on Hugging Face Hub
 
 You can use any LLM you want.
-By default, Unmute uses [Mistral Small 3.2 24B](https://huggingface.co/mistralai/Mistral-Small-3.2-24B-Instruct-2506) as the LLM.
-([Gemma 3 12B](https://huggingface.co/google/gemma-3-12b-it) is also a good choice.)
+In production, we use GPT OSS 120B served over OpenRouter.
+In the default local setup (Docker Compose/Dockerless), Unmute uses [Gemma 3 1B](https://huggingface.co/google/gemma-3-1b-it) as the LLM.
+
 This model is freely available but requires you to accept the conditions to accept it:
 
 1. Create a Hugging Face account.
@@ -73,7 +74,7 @@ To make sure the NVIDIA Container Toolkit is installed correctly, run:
 sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 ```
 
-If you use [meta-llama/Llama-3.2-1B](https://huggingface.co/meta-llama/Llama-3.2-1B),
+If you use [google/gemma-3-1b-it](https://huggingface.co/google/gemma-3-1b-it),
 the default in `docker-compose.yml`, 16GB of GPU memory is sufficient.
 If you're running into memory issues, open `docker-compose.yml` and look for `NOTE:` comments to see places that you might need to adjust.
 
@@ -247,16 +248,16 @@ with
     extra_hosts:
       - "host.docker.internal:host-gateway"
 ```
-This points to your localhost server. Alternatively, for OpenAI, you can use
+This points to your localhost server. Alternatively, to use an OpenAI-compatible server such as [OpenRouter](https://openrouter.ai/), you can use
 ```yaml
   backend:
     image: unmute-backend:latest
     [..]
     environment:
       [..]
-      - KYUTAI_LLM_URL=https://api.openai.com/v1
-      - KYUTAI_LLM_MODEL=gpt-4.1
-      - KYUTAI_LLM_API_KEY=sk-..
+      - KYUTAI_LLM_URL=https://openrouter.ai/api
+      - KYUTAI_LLM_MODEL=google/gemma-3-12b-it # or whatever
+      - KYUTAI_LLM_API_KEY=sk-.. # your OpenRouter key
 ```
 
 The section for vllm can then be removed, as it is no longer needed:
