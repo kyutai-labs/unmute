@@ -46,7 +46,7 @@ def preprocess_messages_for_llm(
         # messages, so add a dummy user message.
         output = [output[0]] + [{"role": "user", "content": "Hello."}] + output[1:]
 
-    for message in chat_history:
+    for message in output:
         if (
             message["role"] == "user"
             and message["content"].startswith(USER_SILENCE_MARKER)
