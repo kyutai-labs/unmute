@@ -7,7 +7,7 @@ authorized_ids = ["public_token"]
 type = "Py"
 path = "/api/tts_streaming"
 text_tokenizer_file = "hf://kyutai/tts-1.6b-en_fr/tokenizer_spm_8k_en_fr_audio.model"
-batch_size = 4  # NOTE: make this smaller if running on one GPU
+batch_size = 16  # NOTE: make this smaller if running on one GPU
 text_bos_token = 1
 
 [modules.tts_py.py]
