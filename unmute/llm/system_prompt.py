@@ -90,6 +90,9 @@ LANGUAGE_CODE_TO_INSTRUCTIONS: dict[LanguageCode | None, str] = {
 
 def get_readable_llm_name():
     model = autoselect_model()
+    # Remove anything before the last slash, if present. The convention is often
+    # "model-creator/model-name", or for openrouter "@preset/preset-name".
+    model = model.split("/")[-1]
     return model.replace("-", " ").replace("_", " ")
 
 

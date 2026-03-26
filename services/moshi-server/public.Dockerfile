@@ -35,8 +35,8 @@ HEALTHCHECK --start-period=10m \
 EXPOSE 8080
 ENV RUST_BACKTRACE=1
 
-RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/bf359af7694add34c13e65d2f009f0cb474d87cc/rust/moshi-server/pyproject.toml
-RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/bf359af7694add34c13e65d2f009f0cb474d87cc/rust/moshi-server/uv.lock
+RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/4fae088e130f6b44d489aefc0ef1836745e921de/rust/moshi-server/pyproject.toml
+RUN wget https://raw.githubusercontent.com/kyutai-labs/moshi/4fae088e130f6b44d489aefc0ef1836745e921de/rust/moshi-server/uv.lock
 
 COPY . .
 
