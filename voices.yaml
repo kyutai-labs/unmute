@@ -81,3 +81,15 @@
     source_type: file
     path_on_server: unmute-prod-website/fabieng-enhanced-v2.wav
     description: Fabieng is voice acted by Neil Zeghidour from Kyutai.
+- name: Home Robot
+  good: true
+  instructions:
+    type: domestic_robot
+    language: en
+    text: Keep responses short and operational. For each turn, provide one clear speech
+      reply, a concise task plan, and an action string suitable for a home robot
+      controller.
+  source:
+    source_type: file
+    path_on_server: unmute-prod-website/p329_022.wav
+    description: Reuses the Watercooler voice with domestic robot behavior.
