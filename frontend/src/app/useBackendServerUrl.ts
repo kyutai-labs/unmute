@@ -6,6 +6,12 @@ export const useBackendServerUrl = () => {
   // Get the backend server URL. This is a bit involved to support different deployment methods.
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const explicitBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
+      if (explicitBackendUrl) {
+        setBackendServerUrl(explicitBackendUrl.replace(/\/$/, ""));
+        return;
+      }
+
       const isInDocker = ["true", "1"].includes(process.env.NEXT_PUBLIC_IN_DOCKER?.toLowerCase() || "");
 
       const prefix = isInDocker ? "/api" : "";

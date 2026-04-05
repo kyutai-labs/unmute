@@ -15,6 +15,7 @@ import UnmuteConfigurator, {
 import CouldNotConnect, { HealthStatus } from "./CouldNotConnect";
 import UnmuteHeader from "./UnmuteHeader";
 import Subtitles from "./Subtitles";
+import ConversationLog from "./ConversationLog";
 import { ChatMessage, compressChatHistory } from "./chatHistory";
 import useWakeLock from "./useWakeLock";
 import ErrorMessages, { ErrorItem, makeErrorItem } from "./ErrorMessages";
@@ -25,6 +26,9 @@ import { useBackendServerUrl } from "./useBackendServerUrl";
 import { RECORDING_CONSENT_STORAGE_KEY } from "./ConsentModal";
 
 const Unmute = () => {
+  const monitorAutoConnect = ["1", "true", "yes"].includes(
+    (process.env.NEXT_PUBLIC_MONITOR_AUTO_CONNECT || "").toLowerCase(),
+  );
   const { isDevMode, showSubtitles } = useKeyboardShortcuts();
   const [debugDict, setDebugDict] = useState<object | null>(null);
   const [unmuteConfig, setUnmuteConfig] = useState<UnmuteConfig>(
@@ -36,6 +40,7 @@ const Unmute = () => {
   const { microphoneAccess, askMicrophoneAccess } = useMicrophoneAccess();
 
   const [shouldConnect, setShouldConnect] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
   const backendServerUrl = useBackendServerUrl();
   const [webSocketUrl, setWebSocketUrl] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
@@ -123,6 +128,10 @@ const Unmute = () => {
   });
 
   const onConnectButtonPress = async () => {
+    if (monitorAutoConnect) {
+      return;
+    }
+
     // If we're not connected yet
     if (!shouldConnect) {
       const mediaStream = await askMicrophoneAccess();
@@ -148,14 +157,84 @@ const Unmute = () => {
     }
   };
 
+  const onRestartConversationButtonPress = async () => {
+    if (isRestarting) return;
+
+    setIsRestarting(true);
+    setRawChatHistory([]);
+
+    try {
+      if (readyState === ReadyState.OPEN) {
+        sendMessage(
+          JSON.stringify({
+            type: "bridge.reset_session",
+            reason: "ui_restart_button",
+          }),
+        );
+      }
+
+      setShouldConnect(false);
+      await new Promise((resolve) => window.setTimeout(resolve, 400));
+      setShouldConnect(true);
+    } finally {
+      setIsRestarting(false);
+    }
+  };
+
   // If the websocket connection is closed, shut down the audio processing
   useEffect(() => {
     if (readyState === ReadyState.CLOSING || readyState === ReadyState.CLOSED) {
       setShouldConnect(false);
-      shutdownAudio();
+      if (!isRestarting) {
+        shutdownAudio();
+      }
     }
-  }, [readyState, shutdownAudio]);
+  }, [isRestarting, readyState, shutdownAudio]);
 
+  // Monitor mode: connect automatically once backend health is available.
+  useEffect(() => {
+    if (!monitorAutoConnect || !backendServerUrl) return;
+    if (shouldConnect) return;
+
+    if (healthStatus?.ok) {
+      setShouldConnect(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    const pollHealth = async () => {
+      try {
+        const response = await fetch(
+          new URL(
+            "v1/health",
+            backendServerUrl.endsWith("/")
+              ? backendServerUrl
+              : backendServerUrl + "/",
+          ).toString(),
+          { cache: "no-store" },
+        );
+        if (!response.ok) return;
+
+        const polledHealthStatus = (await response.json()) as HealthStatus;
+        if (!cancelled && polledHealthStatus.ok) {
+          setShouldConnect(true);
+        }
+      } catch {
+        // Keep polling while monitor auto-connect is enabled.
+      }
+    };
+
+    void pollHealth();
+    const intervalId = window.setInterval(() => {
+      void pollHealth();
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [monitorAutoConnect, backendServerUrl, healthStatus?.ok, shouldConnect]);
   // Handle incoming messages from the server
   useEffect(() => {
     if (lastMessage === null) return;
@@ -244,9 +323,17 @@ const Unmute = () => {
   // Disconnect when the voice or instruction changes.
   // TODO: If it's a voice change, immediately reconnect with the new voice.
   useEffect(() => {
+    if (monitorAutoConnect) {
+      return;
+    }
     setShouldConnect(false);
     shutdownAudio();
-  }, [shutdownAudio, unmuteConfig.voice, unmuteConfig.instructions]);
+  }, [
+    monitorAutoConnect,
+    shutdownAudio,
+    unmuteConfig.voice,
+    unmuteConfig.instructions,
+  ]);
 
   if (!healthStatus || !backendServerUrl) {
     return (
@@ -291,6 +378,7 @@ const Unmute = () => {
           />
         </div>
         {showSubtitles && <Subtitles chatHistory={chatHistory} />}
+        <ConversationLog chatHistory={chatHistory} />
         <UnmuteConfigurator
           backendServerUrl={backendServerUrl}
           config={unmuteConfig}
@@ -306,15 +394,32 @@ const Unmute = () => {
             {"download recording"}
           </SlantedButton>
           <SlantedButton
-            onClick={onConnectButtonPress}
-            kind={shouldConnect ? "secondary" : "primary"}
+            onClick={onRestartConversationButtonPress}
+            kind={isRestarting ? "disabled" : "secondary"}
             extraClasses="w-full max-w-96"
           >
-            {shouldConnect ? "disconnect" : "connect"}
+            {isRestarting ? "restarting..." : "restart conversation"}
+          </SlantedButton>
+          <SlantedButton
+            onClick={onConnectButtonPress}
+            kind={
+              monitorAutoConnect || isRestarting
+                ? "disabled"
+                : shouldConnect
+                  ? "secondary"
+                  : "primary"
+            }
+            extraClasses="w-full max-w-96"
+          >
+            {monitorAutoConnect
+              ? "monitor mode"
+              : shouldConnect
+                ? "disconnect"
+                : "connect"}
           </SlantedButton>
           {/* Maybe we don't need to explicitly show the status */}
           {/* {renderConnectionStatus(readyState, false)} */}
-          {microphoneAccess === "refused" && (
+          {!monitorAutoConnect && microphoneAccess === "refused" && (
             <div className="text-red">
               {"You'll need to allow microphone access to use the demo. " +
                 "Please check your browser settings."}
