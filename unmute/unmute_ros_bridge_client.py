@@ -208,6 +208,7 @@ async def run_bridge() -> None:
             async with websockets.connect(LAPTOP_WS_URL) as laptop_ws:
                 logger.info("Laptop socket connected")
                 while True:
+                    paused_session = False
                     logger.info("Connecting to Unmute websocket: %s", UNMUTE_WS_URL)
                     async with websockets.connect(
                         UNMUTE_WS_URL,
@@ -228,6 +229,7 @@ async def run_bridge() -> None:
                         )
 
                         async def forward_audio_to_unmute() -> None:
+                            nonlocal paused_session
                             packet_count = 0
                             async for message in laptop_ws:
                                 try:
@@ -241,7 +243,32 @@ async def run_bridge() -> None:
                                     reason = data.get("reason", "unspecified")
                                     raise SessionResetRequested(source=source, reason=reason)
 
+                                if msg_type == "bridge.pause_session":
+                                    source = data.get("source", "unknown")
+                                    reason = data.get("reason", "unspecified")
+                                    paused_session = True
+                                    logger.info(
+                                        "Session paused by %s (%s). Suppressing bridge output until resume.",
+                                        source,
+                                        reason,
+                                    )
+                                    continue
+
+                                if msg_type == "bridge.resume_session":
+                                    source = data.get("source", "unknown")
+                                    reason = data.get("reason", "unspecified")
+                                    paused_session = False
+                                    logger.info(
+                                        "Session resumed by %s (%s). Restoring bridge output.",
+                                        source,
+                                        reason,
+                                    )
+                                    continue
+
                                 if msg_type != "audio":
+                                    continue
+
+                                if paused_session:
                                     continue
 
                                 packet_count += 1
@@ -294,6 +321,7 @@ async def run_bridge() -> None:
                                     logger.error("Error forwarding audio to Unmute: %s", exc)
 
                         async def forward_response_to_laptop() -> None:
+                            nonlocal paused_session
                             text_deltas: list[str] = []
                             active_stream_speaker: str | None = None
                             last_char_by_speaker: dict[str, str | None] = {
@@ -319,6 +347,16 @@ async def run_bridge() -> None:
                                 try:
                                     data = json.loads(message)
                                     msg_type = data.get("type")
+
+                                    if paused_session:
+                                        if msg_type == "response.text.done":
+                                            active_stream_speaker = None
+                                            last_char_by_speaker["unmute"] = None
+                                            text_deltas.clear()
+                                        elif msg_type == "conversation.item.input_audio_transcription.completed":
+                                            active_stream_speaker = None
+                                            last_char_by_speaker["user"] = None
+                                        continue
 
                                     if msg_type == "response.audio.delta":
                                         payload = {

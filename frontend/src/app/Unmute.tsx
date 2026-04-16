@@ -41,6 +41,8 @@ const Unmute = () => {
 
   const [shouldConnect, setShouldConnect] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
+  const [manualDisconnect, setManualDisconnect] = useState(false);
+  const [pendingFreshSession, setPendingFreshSession] = useState(false);
   const backendServerUrl = useBackendServerUrl();
   const [webSocketUrl, setWebSocketUrl] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
@@ -128,12 +130,14 @@ const Unmute = () => {
   });
 
   const onConnectButtonPress = async () => {
-    if (monitorAutoConnect) {
-      return;
-    }
-
     // If we're not connected yet
     if (!shouldConnect) {
+      if (monitorAutoConnect) {
+        setManualDisconnect(false);
+        setShouldConnect(true);
+        return;
+      }
+
       const mediaStream = await askMicrophoneAccess();
       // If we have access to the microphone:
       if (mediaStream) {
@@ -141,6 +145,21 @@ const Unmute = () => {
         setShouldConnect(true);
       }
     } else {
+      if (readyState === ReadyState.OPEN) {
+        sendMessage(
+          JSON.stringify({
+            type: "bridge.pause_session",
+            reason: "ui_disconnect_pause",
+          }),
+          true,
+        );
+        await new Promise((resolve) => window.setTimeout(resolve, 50));
+      }
+      setPendingFreshSession(true);
+      setRawChatHistory([]);
+      if (monitorAutoConnect) {
+        setManualDisconnect(true);
+      }
       setShouldConnect(false);
       shutdownAudio();
     }
@@ -158,20 +177,20 @@ const Unmute = () => {
   };
 
   const onRestartConversationButtonPress = async () => {
-    if (isRestarting) return;
+    if (isRestarting || readyState !== ReadyState.OPEN) return;
 
     setIsRestarting(true);
     setRawChatHistory([]);
+    setPendingFreshSession(true);
+    setManualDisconnect(false);
 
     try {
-      if (readyState === ReadyState.OPEN) {
-        sendMessage(
-          JSON.stringify({
-            type: "bridge.reset_session",
-            reason: "ui_restart_button",
-          }),
-        );
-      }
+      sendMessage(
+        JSON.stringify({
+          type: "bridge.reset_session",
+          reason: "ui_restart_button",
+        }),
+      );
 
       setShouldConnect(false);
       await new Promise((resolve) => window.setTimeout(resolve, 400));
@@ -194,6 +213,7 @@ const Unmute = () => {
   // Monitor mode: connect automatically once backend health is available.
   useEffect(() => {
     if (!monitorAutoConnect || !backendServerUrl) return;
+    if (manualDisconnect) return;
     if (shouldConnect) return;
 
     if (healthStatus?.ok) {
@@ -234,7 +254,40 @@ const Unmute = () => {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [monitorAutoConnect, backendServerUrl, healthStatus?.ok, shouldConnect]);
+  }, [
+    monitorAutoConnect,
+    backendServerUrl,
+    healthStatus?.ok,
+    manualDisconnect,
+    shouldConnect,
+  ]);
+
+  // After a manual pause disconnect, resume bridge forwarding and force a
+  // fresh session on the next successful connection.
+  useEffect(() => {
+    if (!pendingFreshSession) return;
+    if (!shouldConnect || readyState !== ReadyState.OPEN) return;
+
+    sendMessage(
+      JSON.stringify({
+        type: "bridge.resume_session",
+        reason: "ui_connect_resume",
+      }),
+    );
+    sendMessage(
+      JSON.stringify({
+        type: "bridge.reset_session",
+        reason: "ui_connect_fresh_session",
+      }),
+    );
+    setRawChatHistory([]);
+    setPendingFreshSession(false);
+  }, [
+    pendingFreshSession,
+    readyState,
+    sendMessage,
+    shouldConnect,
+  ]);
   // Handle incoming messages from the server
   useEffect(() => {
     if (lastMessage === null) return;
@@ -386,17 +439,23 @@ const Unmute = () => {
           voiceCloningUp={healthStatus.voice_cloning_up || false}
         />
         <div className="w-full flex flex-col-reverse md:flex-row items-center justify-center px-3 gap-3 my-6">
-          <SlantedButton
-            onClick={onDownloadRecordingButtonPress}
-            kind={recordingAvailable ? "secondary" : "disabled"}
-            extraClasses="w-full max-w-96"
-          >
-            {"download recording"}
-          </SlantedButton>
+          {!monitorAutoConnect && (
+            <SlantedButton
+              onClick={onDownloadRecordingButtonPress}
+              kind={recordingAvailable ? "secondary" : "disabled"}
+              extraClasses="w-full max-w-96"
+            >
+              {"download recording"}
+            </SlantedButton>
+          )}
           {monitorAutoConnect && (
             <SlantedButton
               onClick={onRestartConversationButtonPress}
-              kind={isRestarting ? "disabled" : "secondary"}
+              kind={
+                !isRestarting && readyState === ReadyState.OPEN
+                  ? "secondary"
+                  : "disabled"
+              }
               extraClasses="w-full max-w-96"
             >
               {isRestarting ? "restarting..." : "restart conversation"}
@@ -405,7 +464,7 @@ const Unmute = () => {
           <SlantedButton
             onClick={onConnectButtonPress}
             kind={
-              monitorAutoConnect || isRestarting
+              isRestarting
                 ? "disabled"
                 : shouldConnect
                   ? "secondary"
@@ -413,11 +472,7 @@ const Unmute = () => {
             }
             extraClasses="w-full max-w-96"
           >
-            {monitorAutoConnect
-              ? "monitor mode"
-              : shouldConnect
-                ? "disconnect"
-                : "connect"}
+            {shouldConnect ? "disconnect" : "connect"}
           </SlantedButton>
           {/* Maybe we don't need to explicitly show the status */}
           {/* {renderConnectionStatus(readyState, false)} */}
