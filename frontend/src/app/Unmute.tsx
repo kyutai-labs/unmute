@@ -393,13 +393,15 @@ const Unmute = () => {
           >
             {"download recording"}
           </SlantedButton>
-          <SlantedButton
-            onClick={onRestartConversationButtonPress}
-            kind={isRestarting ? "disabled" : "secondary"}
-            extraClasses="w-full max-w-96"
-          >
-            {isRestarting ? "restarting..." : "restart conversation"}
-          </SlantedButton>
+          {monitorAutoConnect && (
+            <SlantedButton
+              onClick={onRestartConversationButtonPress}
+              kind={isRestarting ? "disabled" : "secondary"}
+              extraClasses="w-full max-w-96"
+            >
+              {isRestarting ? "restarting..." : "restart conversation"}
+            </SlantedButton>
+          )}
           <SlantedButton
             onClick={onConnectButtonPress}
             kind={
