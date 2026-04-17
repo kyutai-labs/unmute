@@ -34,6 +34,7 @@ from unmute.llm.llm_utils import (
     get_openai_client,
     rechunk_to_words,
 )
+from unmute.llm.unmute_tag_parser import extract_speech_tags
 from unmute.quest_manager import Quest, QuestManager
 from unmute.recorder import Recorder
 from unmute.service_discovery import find_instance
@@ -222,32 +223,55 @@ class UnmuteHandler(AsyncStreamHandler):
         mt.VLLM_ACTIVE_SESSIONS.inc()
 
         try:
-            async for delta in rechunk_to_words(llm.chat_completion(messages)):
-                await self.output_queue.put(
-                    ora.UnmuteResponseTextDeltaReady(delta=delta)
-                )
+            tts_feed: asyncio.Queue[str | None] = asyncio.Queue()
 
-                mt.VLLM_RECV_WORDS.inc()
-                response_words.append(delta)
+            async def _queue_iter():
+                while True:
+                    item = await tts_feed.get()
+                    if item is None:
+                        return
+                    yield item
 
-                if time_to_first_token is None:
-                    time_to_first_token = llm_stopwatch.time()
-                    self.debug_dict["timing"]["to_first_token"] = time_to_first_token
-                    mt.VLLM_TTFT.observe(time_to_first_token)
-                    logger.info("Sending first word to TTS: %s", delta)
-
-                self.tts_output_stopwatch.start_if_not_started()
+            async def _produce_raw() -> None:
+                nonlocal time_to_first_token
                 try:
-                    tts = await quest.get()
-                except Exception:
-                    error_from_tts = True
-                    raise
+                    async for delta in llm.chat_completion(messages):
+                        await self.output_queue.put(
+                            ora.UnmuteResponseTextDeltaReady(delta=delta)
+                        )
+                        mt.VLLM_RECV_WORDS.inc()
+                        response_words.append(delta)
 
-                if len(self.chatbot.chat_history) > generating_message_i:
-                    break  # We've been interrupted
+                        if time_to_first_token is None:
+                            time_to_first_token = llm_stopwatch.time()
+                            self.debug_dict["timing"]["to_first_token"] = (
+                                time_to_first_token
+                            )
+                            mt.VLLM_TTFT.observe(time_to_first_token)
+                            logger.info("First LLM delta received: %s", delta)
 
-                assert isinstance(delta, str)  # make Pyright happy
-                await tts.send(delta)
+                        if len(self.chatbot.chat_history) > generating_message_i:
+                            break  # We've been interrupted
+
+                        await tts_feed.put(delta)
+                finally:
+                    await tts_feed.put(None)
+
+            async def _consume_speech_to_tts() -> None:
+                nonlocal tts, error_from_tts
+                async for word in rechunk_to_words(extract_speech_tags(_queue_iter())):
+                    self.tts_output_stopwatch.start_if_not_started()
+                    try:
+                        tts = await quest.get()
+                    except Exception:
+                        error_from_tts = True
+                        raise
+                    if len(self.chatbot.chat_history) > generating_message_i:
+                        break  # We've been interrupted
+                    assert isinstance(word, str)  # make Pyright happy
+                    await tts.send(word)
+
+            await asyncio.gather(_produce_raw(), _consume_speech_to_tts())
 
             await self.output_queue.put(
                 # The words include the whitespace, so no need to add it here
