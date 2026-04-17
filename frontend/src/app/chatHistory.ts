@@ -1,4 +1,12 @@
-export type ChatRole = "user" | "assistant" | "system";
+export type ChatRole =
+  | "user"
+  | "assistant"
+  | "system"
+  | "llm_raw"
+  | "llm_reasoning"
+  | "llm_plan"
+  | "llm_speech"
+  | "llm_exec";
 
 export type ChatMessage = {
   role: ChatRole;
@@ -15,7 +23,10 @@ export const compressChatHistory = (
       compressed.length > 0 &&
       compressed[compressed.length - 1].role === message.role
     ) {
-      compressed[compressed.length - 1].content += `\n${message.content}`;
+      // Raw LLM tokens already include their own spacing; concatenate verbatim.
+      const separator = message.role === "llm_raw" ? "" : "\n";
+      compressed[compressed.length - 1].content +=
+        `${separator}${message.content}`;
     } else {
       compressed.push({ ...message });
     }

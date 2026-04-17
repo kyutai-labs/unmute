@@ -447,6 +447,14 @@ async def run_bridge() -> None:
                                                 _print_stream_chunk(
                                                     "llm_raw_output", RAW_LLM_LABEL, raw_delta
                                                 )
+                                                await laptop_ws.send(
+                                                    json.dumps(
+                                                        {
+                                                            "type": "robot.llm_raw_delta",
+                                                            "delta": raw_delta,
+                                                        }
+                                                    )
+                                                )
                                             if tag_printer is not None:
                                                 pending_tag_blocks.extend(
                                                     tag_printer.feed(raw_delta)
@@ -474,6 +482,16 @@ async def run_bridge() -> None:
                                             _print_stream_chunk(
                                                 f"llm_tag_{tag_name}", label, content
                                             )
+                                            if DEBUG_LLM_OUTPUT_TAGS:
+                                                await laptop_ws.send(
+                                                    json.dumps(
+                                                        {
+                                                            "type": "robot.llm_tag_block",
+                                                            "tag_name": tag_name,
+                                                            "content": content,
+                                                        }
+                                                    )
+                                                )
                                         if pending_tag_blocks and active_stream_speaker is not None:
                                             print("", flush=True)
                                             active_stream_speaker = None

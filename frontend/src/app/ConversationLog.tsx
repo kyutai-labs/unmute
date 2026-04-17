@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
-import { ChatMessage } from "./chatHistory";
+import { ChatMessage, ChatRole } from "./chatHistory";
 
 type ConversationLogProps = {
   chatHistory: ChatMessage[];
@@ -11,6 +11,66 @@ const AUTO_SCROLL_BOTTOM_THRESHOLD_PX = 60;
 const normalizeStreamingText = (content: string): string => {
   // Chat history compression joins deltas with newlines; collapse them for sentence flow.
   return content.replace(/\s*\n+\s*/g, " ").replace(/\s{2,}/g, " ").trim();
+};
+
+type RoleConfig = {
+  label: string;
+  containerClass: string;
+  labelClass: string;
+  textClass: string;
+  preserveWhitespace: boolean;
+};
+
+const ROLE_CONFIG: Partial<Record<ChatRole, RoleConfig>> = {
+  user: {
+    label: "User",
+    containerClass: "border-lightgray/60 bg-background/40",
+    labelClass: "text-textgray",
+    textClass: "",
+    preserveWhitespace: false,
+  },
+  assistant: {
+    label: "Assistant",
+    containerClass: "border-green/60 bg-green/10",
+    labelClass: "text-green",
+    textClass: "",
+    preserveWhitespace: false,
+  },
+  llm_raw: {
+    label: "Unmute - Raw LLM",
+    containerClass: "border-gray/60 bg-darkgray/60",
+    labelClass: "text-lightgray",
+    textClass: "font-mono text-xs md:text-sm text-lightgray",
+    preserveWhitespace: true,
+  },
+  llm_reasoning: {
+    label: "Unmute - Reasoning",
+    containerClass: "border-purple/60 bg-purple/10",
+    labelClass: "text-purple",
+    textClass: "",
+    preserveWhitespace: false,
+  },
+  llm_plan: {
+    label: "Unmute - Plan",
+    containerClass: "border-orange/60 bg-orange/10",
+    labelClass: "text-orange",
+    textClass: "font-mono text-xs md:text-sm",
+    preserveWhitespace: true,
+  },
+  llm_speech: {
+    label: "Unmute - Speech",
+    containerClass: "border-green/40 bg-green/5",
+    labelClass: "text-green",
+    textClass: "",
+    preserveWhitespace: false,
+  },
+  llm_exec: {
+    label: "Unmute - Exec",
+    containerClass: "border-pink/60 bg-pink/10",
+    labelClass: "text-pink",
+    textClass: "font-mono text-xs md:text-sm",
+    preserveWhitespace: true,
+  },
 };
 
 const ConversationLog = ({ chatHistory }: ConversationLogProps) => {
@@ -91,29 +151,35 @@ const ConversationLog = ({ chatHistory }: ConversationLogProps) => {
 
       <div className="flex flex-col gap-2 md:gap-3">
         {visibleMessages.map((message, idx) => {
-          const isAssistant = message.role === "assistant";
-          const roleLabel = isAssistant ? "Assistant" : "User";
-          const renderedText = normalizeStreamingText(message.content);
+          const config =
+            ROLE_CONFIG[message.role as ChatRole] ?? ROLE_CONFIG.assistant!;
+          const renderedText = config.preserveWhitespace
+            ? message.content
+            : normalizeStreamingText(message.content);
 
           return (
             <article
               key={`${idx}-${message.role}`}
               className={clsx(
                 "rounded-md border px-3 py-2",
-                isAssistant
-                  ? "border-green/60 bg-green/10"
-                  : "border-lightgray/60 bg-background/40",
+                config.containerClass,
               )}
             >
               <p
                 className={clsx(
                   "text-[0.7rem] md:text-xs uppercase tracking-wider mb-1",
-                  isAssistant ? "text-green" : "text-textgray",
+                  config.labelClass,
                 )}
               >
-                {roleLabel}
+                {config.label}
               </p>
-              <p className="break-words text-sm md:text-base leading-relaxed">
+              <p
+                className={clsx(
+                  "break-words text-sm md:text-base leading-relaxed",
+                  config.preserveWhitespace && "whitespace-pre-wrap",
+                  config.textClass,
+                )}
+              >
                 {renderedText}
               </p>
             </article>

@@ -16,7 +16,7 @@ import CouldNotConnect, { HealthStatus } from "./CouldNotConnect";
 import UnmuteHeader from "./UnmuteHeader";
 import Subtitles from "./Subtitles";
 import ConversationLog from "./ConversationLog";
-import { ChatMessage, compressChatHistory } from "./chatHistory";
+import { ChatMessage, ChatRole, compressChatHistory } from "./chatHistory";
 import useWakeLock from "./useWakeLock";
 import ErrorMessages, { ErrorItem, makeErrorItem } from "./ErrorMessages";
 import { useRecordingCanvas } from "./useRecordingCanvas";
@@ -332,6 +332,28 @@ const Unmute = () => {
         // but whatever.
         { role: "assistant", content: " " + data.delta },
       ]);
+    } else if (data.type === "unmute.llm_raw_delta") {
+      if (typeof data.delta === "string" && data.delta.length > 0) {
+        setRawChatHistory((prev) => [
+          ...prev,
+          { role: "llm_raw", content: data.delta },
+        ]);
+      }
+    } else if (data.type === "unmute.llm_tag_block") {
+      const tagName =
+        typeof data.tag_name === "string" ? data.tag_name : "";
+      const content =
+        typeof data.content === "string" ? data.content : "";
+      const roleMap: Record<string, ChatRole> = {
+        reasoning: "llm_reasoning",
+        plan: "llm_plan",
+        speech: "llm_speech",
+        exec: "llm_exec",
+      };
+      const role = roleMap[tagName];
+      if (role && content.length > 0) {
+        setRawChatHistory((prev) => [...prev, { role, content }]);
+      }
     } else {
       const ignoredTypes = [
         "session.updated",
@@ -345,6 +367,8 @@ const Unmute = () => {
         "unmute.interrupted_by_vad",
         "unmute.response.text.delta.ready",
         "unmute.response.audio.delta.ready",
+        "unmute.llm_raw_delta",
+        "unmute.llm_tag_block",
       ];
       if (!ignoredTypes.includes(data.type)) {
         console.warn("Received unknown message:", data);
