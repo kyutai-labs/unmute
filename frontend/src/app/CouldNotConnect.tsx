@@ -25,7 +25,7 @@ const renderServiceStatus = (
 
   return (
     <p>
-      {name}:{" "}
+      <span className="text-lightgray">{name}:</span>{" "}
       <span
         className={clsx(
           status === "Up"
@@ -52,12 +52,23 @@ const CouldNotConnect = ({ healthStatus }: { healthStatus: HealthStatus }) => {
     return null;
   }
 
+  const isUnmuteSh =
+    typeof window !== "undefined" && window.location.hostname === "unmute.sh";
+
   return (
-    <div className="w-full h-full flex flex-col gap-12 items-center justify-center bg-background">
+    <div className="w-full h-full flex flex-col gap-6 items-center justify-center bg-background">
       <UnmuteHeader />
       <div className="text-center text-xl">
-        <h1 className="text-3xl mb-4">{"Couldn't connect :("}</h1>
-        <p>Service status:</p>
+        <h1 className="text-3xl">{"Couldn't connect :("}</h1>
+        {isUnmuteSh && (
+          <p className="mb-4 text-lg text-lightgray">
+            Sorry! Tell us about it at{" "}
+            <a href="mailto:unmute@kyutai.org" className="underline">
+              unmute@kyutai.org
+            </a>
+          </p>
+        )}
+        <h2 className="text-2xl">Service status</h2>
         {renderServiceStatus(
           "Backend",
           humanReadableStatus[healthStatus.connected]
