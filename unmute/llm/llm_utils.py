@@ -7,7 +7,11 @@ from openai import AsyncOpenAI, OpenAI
 
 from unmute.kyutai_constants import LLM_SERVER
 
-from ..kyutai_constants import KYUTAI_LLM_API_KEY, KYUTAI_LLM_MODEL
+from ..kyutai_constants import (
+    KYUTAI_LLM_API_KEY,
+    KYUTAI_LLM_ENABLE_THINKING,
+    KYUTAI_LLM_MODEL,
+)
 
 INTERRUPTION_CHAR = "—"  # em-dash
 USER_SILENCE_MARKER = "..."
@@ -128,6 +132,7 @@ class VLLMStream:
         self,
         client: AsyncOpenAI,
         temperature: float = 1.0,
+        enable_thinking: bool | None = KYUTAI_LLM_ENABLE_THINKING,
     ):
         """
         If `model` is None, it will look at the available models, and if there is only
@@ -136,15 +141,25 @@ class VLLMStream:
         self.client = client
         self.model = autoselect_model()
         self.temperature = temperature
+        self.enable_thinking = enable_thinking
 
     async def chat_completion(
         self, messages: list[dict[str, str]]
     ) -> AsyncIterator[str]:
+        extra_body_kwargs: dict[str, Any] = {}
+        if self.enable_thinking is not None:
+            extra_body_kwargs["extra_body"] = {
+                "chat_template_kwargs": {
+                    "enable_thinking": self.enable_thinking,
+                }
+            }
+
         stream = await self.client.chat.completions.create(
             model=self.model,
             messages=cast(Any, messages),  # Cast and hope for the best
             stream=True,
             temperature=self.temperature,
+            **extra_body_kwargs,
         )
 
         async with stream:

@@ -3,6 +3,20 @@ from pathlib import Path
 
 from unmute.websocket_utils import http_to_ws
 
+
+def optional_bool_env(name: str) -> bool | None:
+    value = os.environ.get(name)
+    if value is None:
+        return None
+
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"{name} must be a boolean value, got {value!r}")
+
+
 HEADERS = {"kyutai-api-key": "public_token"}
 
 # The defaults are already ws://, but make the env vars support http:// and https://
@@ -11,6 +25,7 @@ TTS_SERVER = http_to_ws(os.environ.get("KYUTAI_TTS_URL", "ws://localhost:8089"))
 LLM_SERVER = os.environ.get("KYUTAI_LLM_URL", "http://localhost:8091")
 KYUTAI_LLM_MODEL = os.environ.get("KYUTAI_LLM_MODEL")
 KYUTAI_LLM_API_KEY = os.environ.get("KYUTAI_LLM_API_KEY")
+KYUTAI_LLM_ENABLE_THINKING = optional_bool_env("KYUTAI_LLM_ENABLE_THINKING")
 VOICE_CLONING_SERVER = os.environ.get(
     "KYUTAI_VOICE_CLONING_URL", "http://localhost:8092"
 )

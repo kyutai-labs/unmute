@@ -260,6 +260,14 @@ This points to your localhost server. Alternatively, to use an OpenAI-compatible
       - KYUTAI_LLM_API_KEY=sk-.. # your OpenRouter key
 ```
 
+Some reasoning models stream their analysis separately from normal response content.
+If the server supports the `enable_thinking` chat-template option, disable reasoning so
+Unmute can send spoken content to TTS without waiting for the analysis to finish:
+```yaml
+      - KYUTAI_LLM_ENABLE_THINKING=false
+```
+Leave this variable unset for servers that do not support the option.
+
 The section for vllm can then be removed, as it is no longer needed:
 ```yaml
   llm:
