@@ -84,3 +84,6 @@ dev = [
     "pyinstrument",
     "ffmpeg-normalize>=1.31.3",
 ]
+
+[tool.uv]
+exclude-newer = "7 days"
